@@ -1,0 +1,6 @@
+{
+  "name": "Эхо Между Нами (Echo Between Us)",
+  "description": "Текстовая мистическая новелла: 33 дня переписки между замкнутой студенткой и призраком в туманном лимбе через таинственный мессенджер.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

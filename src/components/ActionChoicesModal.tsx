@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChoiceOption } from '../types/game';
 import { sortChoicesWithDistrustFirst, EnrichedChoice } from '../utils/choiceSorting';
-import { X, Send, Sparkles, ChevronDown, ChevronUp, ShieldAlert, Heart, Flame } from 'lucide-react';
+import { X, Send, ChevronLeft, ChevronRight, ShieldAlert, Heart, Flame } from 'lucide-react';
 import { playChoiceBeep, playMessageSend, playTapSound } from '../utils/audio';
+import { VoiceWaveformIcon } from './VoiceWaveformIcon';
 
 interface ActionChoicesModalProps {
   isOpen: boolean;
@@ -60,9 +61,9 @@ export const ActionChoicesModal: React.FC<ActionChoicesModalProps> = ({
   const handleScroll = () => {
     if (!scrollContainerRef.current) return;
     const container = scrollContainerRef.current;
-    const itemHeight = container.clientHeight;
-    if (itemHeight > 0) {
-      const idx = Math.round(container.scrollTop / itemHeight);
+    const itemWidth = container.clientWidth;
+    if (itemWidth > 0) {
+      const idx = Math.round(container.scrollLeft / itemWidth);
       setCurrentIndex(Math.min(Math.max(0, idx), enrichedChoices.length - 1));
     }
   };
@@ -71,8 +72,8 @@ export const ActionChoicesModal: React.FC<ActionChoicesModalProps> = ({
     if (!scrollContainerRef.current) return;
     playTapSound(0.15);
     const container = scrollContainerRef.current;
-    const targetScroll = index * container.clientHeight;
-    container.scrollTo({ top: targetScroll, behavior: 'smooth' });
+    const targetScroll = index * container.clientWidth;
+    container.scrollTo({ left: targetScroll, behavior: 'smooth' });
     setCurrentIndex(index);
   };
 
@@ -93,15 +94,15 @@ export const ActionChoicesModal: React.FC<ActionChoicesModalProps> = ({
         {/* Top Handle / Header */}
         <div className="w-full pt-3.5 pb-2.5 px-4 flex items-center justify-between border-b border-white/[0.08] bg-[#111625]">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-purple-800 to-indigo-950 border border-purple-500/60 flex items-center justify-center shadow-sm">
-              <Sparkles className="w-4 h-4 text-amber-300" />
+            <div className="w-8 h-8 rounded-xl bg-[#0e1726] border border-cyan-500/50 flex items-center justify-center shadow-[0_0_10px_rgba(6,182,212,0.2)]">
+              <VoiceWaveformIcon size="sm" barCount={4} />
             </div>
             <div>
               <h3 className="text-xs font-bold text-slate-100 font-sans tracking-wide">
-                Вариант действия
+                Сообщение для отправки
               </h3>
-              <span className="text-[10px] text-purple-300/80 font-sans">
-                Действие {currentIndex + 1} из {enrichedChoices.length} (листайте для других)
+              <span className="text-[10px] text-cyan-300/80 font-sans">
+                Вариант {currentIndex + 1} из {enrichedChoices.length}
               </span>
             </div>
           </div>
@@ -116,7 +117,7 @@ export const ActionChoicesModal: React.FC<ActionChoicesModalProps> = ({
                   className="p-1 rounded-lg text-slate-300 hover:text-white disabled:opacity-30 disabled:hover:text-slate-300 transition-colors"
                   title="Предыдущий вариант"
                 >
-                  <ChevronUp className="w-3.5 h-3.5" />
+                  <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
                 <button
                   disabled={currentIndex === enrichedChoices.length - 1}
@@ -124,7 +125,7 @@ export const ActionChoicesModal: React.FC<ActionChoicesModalProps> = ({
                   className="p-1 rounded-lg text-slate-300 hover:text-white disabled:opacity-30 disabled:hover:text-slate-300 transition-colors"
                   title="Следующий вариант"
                 >
-                  <ChevronDown className="w-3.5 h-3.5" />
+                  <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             )}
@@ -140,37 +141,32 @@ export const ActionChoicesModal: React.FC<ActionChoicesModalProps> = ({
           </div>
         </div>
 
-        {/* Scrollable Container configured so EXACTLY 1 ACTION is visible at a time with snap scrolling */}
+        {/* Horizontal Scrollable Container configured so EXACTLY 1 ACTION is visible at a time with horizontal snap */}
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="w-full h-[155px] overflow-y-auto snap-y snap-mandatory p-3 flex flex-col no-scrollbar"
+          className="w-full overflow-x-auto snap-x snap-mandatory flex flex-row no-scrollbar p-3"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {enrichedChoices.map((choice, index) => {
             const hasAffection = (choice.statImpact?.affection || 0) !== 0;
             const hasCourage = (choice.statImpact?.courage || 0) !== 0;
             const hasDependence = (choice.statImpact?.dependence || 0) !== 0;
+            const textToSend = choice.messageText || choice.label;
 
             return (
               <div
                 key={choice.id || index}
                 id={`action-choice-option-${index}`}
                 onClick={() => handlePickChoice(choice)}
-                className="snap-center shrink-0 w-full h-[131px] rounded-2xl p-3.5 border border-purple-500/40 hover:border-purple-400 bg-gradient-to-br from-[#181d2e] via-[#141826] to-[#1d162e] hover:from-[#1e243a] hover:to-[#281e40] shadow-lg transition-all duration-200 cursor-pointer flex flex-col justify-between active:scale-[0.99] mb-3 last:mb-0"
+                className="snap-center shrink-0 w-full min-w-full h-[126px] rounded-2xl p-3.5 border border-purple-500/40 hover:border-purple-400 bg-gradient-to-br from-[#181d2e] via-[#141826] to-[#1d162e] hover:from-[#1e243a] hover:to-[#281e40] shadow-lg transition-all duration-200 cursor-pointer flex flex-col justify-between active:scale-[0.99]"
               >
-                {/* Main Label and Send Button */}
+                {/* Main Message Text to send (Directly as message preview, without redundant description) */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 pr-1 overflow-hidden">
-                    <p className="text-[13px] sm:text-[13.5px] font-semibold leading-snug text-slate-100 font-sans group-hover:text-amber-200 line-clamp-2">
-                      {choice.label}
+                    <p className="text-[13px] sm:text-[13.5px] font-normal leading-relaxed text-slate-100 font-sans group-hover:text-amber-100 line-clamp-3">
+                      «{textToSend}»
                     </p>
-
-                    {/* Extended preview if differing */}
-                    {choice.messageText && choice.messageText !== choice.label && (
-                      <p className="text-[11px] font-serif italic text-purple-200/70 mt-1 line-clamp-2">
-                        «{choice.messageText}»
-                      </p>
-                    )}
                   </div>
 
                   <div className="w-9 h-9 rounded-xl bg-purple-600 hover:bg-purple-500 border border-purple-400/60 shadow-[0_0_12px_rgba(168,85,247,0.3)] flex items-center justify-center text-white flex-shrink-0">
@@ -200,7 +196,7 @@ export const ActionChoicesModal: React.FC<ActionChoicesModalProps> = ({
                       </span>
                     )}
                     {!hasAffection && !hasCourage && !hasDependence && (
-                      <span className="text-slate-500 font-sans text-[10px]">Нажмите для ответа</span>
+                      <span className="text-slate-500 font-sans text-[10px]">Нажмите для отправки</span>
                     )}
                   </div>
 
@@ -217,7 +213,7 @@ export const ActionChoicesModal: React.FC<ActionChoicesModalProps> = ({
 
         {/* Dots pagination bar if multiple choices */}
         {enrichedChoices.length > 1 && (
-          <div className="w-full py-1.5 flex items-center justify-center gap-1.5 bg-[#0a0d16]/90 border-t border-white/[0.04]">
+          <div className="w-full py-2 flex items-center justify-center gap-1.5 bg-[#0a0d16]/90 border-t border-white/[0.04]">
             {enrichedChoices.map((_, i) => (
               <button
                 key={i}
@@ -232,19 +228,6 @@ export const ActionChoicesModal: React.FC<ActionChoicesModalProps> = ({
             ))}
           </div>
         )}
-
-        {/* Dismiss hint footer */}
-        <div className="w-full py-2 px-4 bg-[#080a12] border-t border-white/[0.05] flex items-center justify-between">
-          <span className="text-[10px] text-slate-500 font-sans">
-            {enrichedChoices.length > 1 ? 'Листайте вверх/вниз для других ответов' : 'Нажмите на карточку, чтобы отправить'}
-          </span>
-          <button
-            onClick={handleDismiss}
-            className="text-[11px] text-purple-300 hover:text-purple-100 transition-colors font-sans font-medium"
-          >
-            Свернуть
-          </button>
-        </div>
       </div>
     </div>
   );

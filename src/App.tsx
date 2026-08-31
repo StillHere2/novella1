@@ -28,15 +28,50 @@ import {
 } from './utils/audio';
 import { sendGameNotification } from './utils/notifications';
 
-const STORAGE_KEY = 'echo_between_us_state_v1';
+const STORAGE_KEY = 'echo_between_us_state_v3';
+
+// Helper to clean up any duplicate consecutive messages from previous versions
+const sanitizeMessages = (msgs: Message[]): Message[] => {
+  if (!Array.isArray(msgs)) return [];
+  const clean: Message[] = [];
+  for (let i = 0; i < msgs.length; i++) {
+    const curr = msgs[i];
+    const prev = clean[clean.length - 1];
+    if (prev && prev.text === curr.text && prev.sender === curr.sender) {
+      continue;
+    }
+    clean.push(curr);
+  }
+  return clean;
+};
 
 export default function App() {
   // Main Game State
   const [gameState, setGameState] = useState<GameState>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved =
+        localStorage.getItem(STORAGE_KEY) ||
+        localStorage.getItem('echo_between_us_state_v2') ||
+        localStorage.getItem('echo_between_us_state_v1');
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          const cleanMsgs = sanitizeMessages(parsed.messages || []);
+          const isNameKnown =
+            Boolean(parsed.currentDay && parsed.currentDay > 1) ||
+            cleanMsgs.some(
+              (m: Message) =>
+                m.text?.includes('В памяти всплывает имя... Марк') ||
+                m.text?.includes('Марк. Больше ни одной детали')
+            );
+          return {
+            ...parsed,
+            messages: cleanMsgs,
+            isBoyNameKnown: isNameKnown,
+            isTyping: false,
+            typingSender: null,
+          };
+        }
       }
     } catch {}
 
@@ -72,6 +107,7 @@ export default function App() {
       unlockedEndings: [],
       gameFinishedEnding: null,
       isInitialDarkness: false,
+      isBoyNameKnown: false,
     };
   });
 
@@ -79,9 +115,32 @@ export default function App() {
   const [isThoughtsWindowOpen, setIsThoughtsWindowOpen] = useState(false);
   const [isActionPopupOpen, setIsActionPopupOpen] = useState(false);
   const [activeStickerThought, setActiveStickerThought] = useState<ThoughtBubble | null>(null);
+  const [stickerQueue, setStickerQueue] = useState<ThoughtBubble[]>([]);
   const [shownStickerIds, setShownStickerIds] = useState<Set<string>>(new Set());
   const [prefilledThoughtText, setPrefilledThoughtText] = useState<string>('');
+  const [lastPlayerChoiceMsgId, setLastPlayerChoiceMsgId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const activeStepKeyRef = useRef<string>('');
+  const pendingNextStepRef = useRef<string | null>(null);
+
+  // Enqueue thoughts strictly within current active step context
+  const triggerStepThoughts = (thoughts?: ThoughtBubble[]) => {
+    if (!thoughts || thoughts.length === 0) return;
+    const unshown = thoughts.filter((t) => !shownStickerIds.has(t.id));
+    if (unshown.length === 0) return;
+
+    if (!activeStickerThought) {
+      const [first, ...rest] = unshown;
+      setActiveStickerThought(first);
+      setStickerQueue(rest);
+      setShownStickerIds((prev) => new Set([...prev, first.id]));
+    } else {
+      setStickerQueue((prev) => {
+        const uniqueRest = unshown.filter((t) => t.id !== activeStickerThought.id && !prev.some((q) => q.id === t.id));
+        return [...prev, ...uniqueRest];
+      });
+    }
+  };
 
   // Save to localStorage
   useEffect(() => {
@@ -107,37 +166,36 @@ export default function App() {
   const currentDayData = getDayData(gameState.currentDay);
   const currentStep = currentDayData.steps[gameState.currentStepId] || currentDayData.steps[currentDayData.startingStepId];
 
-  // Compute available choices after message delivery
   const availableChoices =
     !gameState.isTyping && currentStep?.choices && currentStep.choices.length > 0
       ? currentStep.choices
       : [];
 
-  // Auto-open Action Choices Popup when incoming message has delivered and choices are ready
+  // Auto-close Action Choices Popup if typing starts, choices are depleted, or game is paused
   useEffect(() => {
     if (
-      availableChoices.length > 0 &&
-      !gameState.isTyping &&
-      !gameState.waitingState?.isWaiting &&
-      !gameState.gameFinishedEnding
+      gameState.isTyping ||
+      availableChoices.length === 0 ||
+      gameState.waitingState?.isWaiting ||
+      gameState.gameFinishedEnding
     ) {
-      setIsActionPopupOpen(true);
-    } else {
       setIsActionPopupOpen(false);
     }
   }, [
-    gameState.currentStepId,
     gameState.isTyping,
     availableChoices.length,
     gameState.waitingState?.isWaiting,
     gameState.gameFinishedEnding,
   ]);
 
-  // Process narrative step & collect thoughts onto the desk & trigger paper sticker popup
+  // Process narrative step & collect thoughts onto the desk & trigger paper sticker popup strictly in dialogue context AFTER a message is read by Alice
   useEffect(() => {
     if (!currentStep || gameState.waitingState?.isWaiting || gameState.gameFinishedEnding) {
       return;
     }
+
+    const stepKey = `${gameState.currentDay}_${gameState.currentStepId}`;
+    activeStepKeyRef.current = stepKey;
 
     // 1. Perspective switch trigger
     if (currentStep.triggersPerspectiveSwitch && currentStep.triggersPerspectiveSwitch !== gameState.activePerspective) {
@@ -182,16 +240,12 @@ export default function App() {
       return;
     }
 
-    // 4. Interactive Choice step: Stop auto-progression and present choices to player
-    if (currentStep.choices && currentStep.choices.length > 0) {
+    // 4. Interactive Choice step (Waiting for player selection)
+    if ((!currentStep.text || currentStep.text.trim().length === 0) && currentStep.choices && currentStep.choices.length > 0) {
+      pendingNextStepRef.current = null;
       if (currentStep.thoughts && currentStep.thoughts.length > 0) {
-        const unshownThought = currentStep.thoughts.find((t) => !shownStickerIds.has(t.id));
-        if (unshownThought) {
-          setActiveStickerThought(unshownThought);
-          setShownStickerIds((prev) => new Set([...prev, unshownThought.id]));
-        }
+        triggerStepThoughts(currentStep.thoughts);
       }
-
       setGameState((prev) => {
         let updatedDiscoveredThoughts = prev.discoveredThoughts || [];
         if (currentStep.thoughts && currentStep.thoughts.length > 0) {
@@ -211,12 +265,12 @@ export default function App() {
       return;
     }
 
-    // 5. Message Step with Text (Incoming or Outgoing)
+    // 5. Message Step with Text (Incoming from Mark/System or Outgoing from Alice)
     if (currentStep.text && currentStep.text.trim().length > 0) {
       const isIncoming = currentStep.sender !== gameState.activePerspective;
 
       if (isIncoming) {
-        // Incoming message from other character or system
+        // Incoming message from Mark or system
         setGameState((prev) => ({
           ...prev,
           isTyping: true,
@@ -225,18 +279,26 @@ export default function App() {
 
         const charCount = currentStep.text.length;
         const baseDelay = currentStep.sender === 'system'
-          ? 900
-          : Math.max(2000, Math.min(3800, 2000 + charCount * 18));
+          ? 500
+          : Math.max(1200, Math.min(2400, 900 + charCount * 11));
         const delay = baseDelay / (gameState.settings.speedMultiplier || 1);
 
+        let readTimer: NodeJS.Timeout | null = null;
+        let advanceTimer: NodeJS.Timeout | null = null;
+
         const timer = setTimeout(() => {
+          // If step changed while waiting, abort
+          if (activeStepKeyRef.current !== stepKey) return;
+
           const timeNow = gameState.activePerspective === 'boy' ? '02:17' : '23:47';
+          const newMsgId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
           const newMsg: Message = {
-            id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+            id: newMsgId,
             sender: currentStep.sender,
             text: currentStep.text,
             timestamp: timeNow,
             isGlitch: currentStep.glitchEffect,
+            status: 'sent',
           };
 
           if (gameState.settings.soundEnabled) {
@@ -244,15 +306,7 @@ export default function App() {
             else playMessageReceive();
           }
 
-          // Trigger paper sticker on phone screen AFTER receiving the message
-          if (currentStep.thoughts && currentStep.thoughts.length > 0) {
-            const unshownThought = currentStep.thoughts.find((t) => !shownStickerIds.has(t.id));
-            if (unshownThought) {
-              setActiveStickerThought(unshownThought);
-              setShownStickerIds((prev) => new Set([...prev, unshownThought.id]));
-            }
-          }
-
+          // Step A: Message delivered to the screen, typing indicator stops
           setGameState((prev) => {
             let updatedDiscoveredThoughts = prev.discoveredThoughts || [];
             if (currentStep.thoughts && currentStep.thoughts.length > 0) {
@@ -263,27 +317,69 @@ export default function App() {
               }
             }
 
+            const lastMsg = prev.messages[prev.messages.length - 1];
+            const isDuplicate = lastMsg && lastMsg.text === currentStep.text && lastMsg.sender === currentStep.sender;
+            const updatedMessages = isDuplicate ? prev.messages : [...prev.messages, newMsg];
+            const nameRevealed = currentStep.id === 'd1_boy_name_answer' || (currentStep.text && currentStep.text.includes('В памяти всплывает имя... Марк'));
+
             return {
               ...prev,
               isTyping: false,
               typingSender: null,
-              messages: [...prev.messages, newMsg],
+              messages: updatedMessages,
               discoveredThoughts: updatedDiscoveredThoughts,
-              currentStepId: currentStep.nextStepId || prev.currentStepId,
+              isBoyNameKnown: prev.isBoyNameKnown || Boolean(nameRevealed),
             };
           });
+
+          // Step B: Reading delay — Alice reads the incoming message on her screen
+          const readDuration = Math.max(400, Math.min(1200, 300 + charCount * 7)) / (gameState.settings.speedMultiplier || 1);
+
+          readTimer = setTimeout(() => {
+            if (activeStepKeyRef.current !== stepKey) return;
+
+            // Update message status to 'read' (double checkmarks)
+            setGameState((prev) => ({
+              ...prev,
+              messages: prev.messages.map((m) => (m.id === newMsgId ? { ...m, status: 'read' as const } : m)),
+            }));
+
+            // Step C: If message has thoughts, show sticker and pause advance until dismissed
+            if (currentStep.thoughts && currentStep.thoughts.length > 0) {
+              triggerStepThoughts(currentStep.thoughts);
+              if (currentStep.nextStepId) {
+                pendingNextStepRef.current = currentStep.nextStepId;
+              }
+            } else if (currentStep.nextStepId) {
+              // Step D: Advance to next step (next burst message or choice prompt)
+              const advanceDelay = 350 / (gameState.settings.speedMultiplier || 1);
+              advanceTimer = setTimeout(() => {
+                if (activeStepKeyRef.current !== stepKey) return;
+                setGameState((prev) => ({
+                  ...prev,
+                  currentStepId: currentStep.nextStepId!,
+                }));
+              }, advanceDelay);
+            }
+          }, readDuration);
         }, delay);
 
         return () => {
           clearTimeout(timer);
+          if (readTimer) clearTimeout(readTimer);
+          if (advanceTimer) clearTimeout(advanceTimer);
         };
       } else {
         // Outgoing monologue/narrative message from the active character
         const charCount = currentStep.text.length;
-        const calculatedDelay = Math.max(1200, Math.min(2200, 1000 + charCount * 12));
+        const calculatedDelay = Math.max(800, Math.min(1600, 600 + charCount * 9));
         const delay = calculatedDelay / (gameState.settings.speedMultiplier || 1);
 
+        let advanceTimer: NodeJS.Timeout | null = null;
+
         const timer = setTimeout(() => {
+          if (activeStepKeyRef.current !== stepKey) return;
+
           const timeNow = gameState.activePerspective === 'boy' ? '02:17' : '23:47';
           const newMsg: Message = {
             id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
@@ -297,14 +393,6 @@ export default function App() {
             playMessageSend();
           }
 
-          if (currentStep.thoughts && currentStep.thoughts.length > 0) {
-            const unshownThought = currentStep.thoughts.find((t) => !shownStickerIds.has(t.id));
-            if (unshownThought) {
-              setActiveStickerThought(unshownThought);
-              setShownStickerIds((prev) => new Set([...prev, unshownThought.id]));
-            }
-          }
-
           setGameState((prev) => {
             let updatedDiscoveredThoughts = prev.discoveredThoughts || [];
             if (currentStep.thoughts && currentStep.thoughts.length > 0) {
@@ -315,19 +403,38 @@ export default function App() {
               }
             }
 
+            const lastMsg = prev.messages[prev.messages.length - 1];
+            const isDuplicate = lastMsg && lastMsg.text === currentStep.text && lastMsg.sender === currentStep.sender;
+            const updatedMessages = isDuplicate ? prev.messages : [...prev.messages, newMsg];
+
             return {
               ...prev,
               isTyping: false,
               typingSender: null,
-              messages: [...prev.messages, newMsg],
+              messages: updatedMessages,
               discoveredThoughts: updatedDiscoveredThoughts,
-              currentStepId: currentStep.nextStepId || prev.currentStepId,
             };
           });
+
+          if (currentStep.thoughts && currentStep.thoughts.length > 0) {
+            triggerStepThoughts(currentStep.thoughts);
+            if (currentStep.nextStepId) {
+              pendingNextStepRef.current = currentStep.nextStepId;
+            }
+          } else if (currentStep.nextStepId) {
+            advanceTimer = setTimeout(() => {
+              if (activeStepKeyRef.current !== stepKey) return;
+              setGameState((prev) => ({
+                ...prev,
+                currentStepId: currentStep.nextStepId!,
+              }));
+            }, 350 / (gameState.settings.speedMultiplier || 1));
+          }
         }, delay);
 
         return () => {
           clearTimeout(timer);
+          if (advanceTimer) clearTimeout(advanceTimer);
         };
       }
     }
@@ -335,20 +442,33 @@ export default function App() {
     // 6. Transition step with no text and no choices (advance immediately)
     if (currentStep.nextStepId && currentStep.nextStepId !== gameState.currentStepId) {
       if (currentStep.thoughts && currentStep.thoughts.length > 0) {
-        const unshownThought = currentStep.thoughts.find((t) => !shownStickerIds.has(t.id));
-        if (unshownThought) {
-          setActiveStickerThought(unshownThought);
-          setShownStickerIds((prev) => new Set([...prev, unshownThought.id]));
-        }
+        triggerStepThoughts(currentStep.thoughts);
       }
-
-      setGameState((prev) => ({
-        ...prev,
-        isTyping: false,
-        currentStepId: currentStep.nextStepId!,
-      }));
+      setGameState((prev) => {
+        let updatedDiscoveredThoughts = prev.discoveredThoughts || [];
+        if (currentStep.thoughts && currentStep.thoughts.length > 0) {
+          const existingIds = new Set(updatedDiscoveredThoughts.map((t) => t.id));
+          const newThoughts = currentStep.thoughts.filter((t) => !existingIds.has(t.id));
+          if (newThoughts.length > 0) {
+            updatedDiscoveredThoughts = [...updatedDiscoveredThoughts, ...newThoughts];
+          }
+        }
+        return {
+          ...prev,
+          isTyping: false,
+          discoveredThoughts: updatedDiscoveredThoughts,
+          currentStepId: currentStep.nextStepId!,
+        };
+      });
     }
-  }, [gameState.currentStepId, gameState.currentDay, gameState.activePerspective]);
+  }, [
+    gameState.currentStepId,
+    gameState.currentDay,
+    gameState.waitingState?.isWaiting,
+    gameState.gameFinishedEnding,
+    gameState.settings.speedMultiplier,
+    gameState.activePerspective,
+  ]);
 
   // Timer Tick Interval for pauses/waiting
   useEffect(() => {
@@ -403,6 +523,12 @@ export default function App() {
   // Handle Player Selecting Dialogue Choice
   const handleSelectChoice = (choice: ChoiceOption) => {
     setIsActionPopupOpen(false);
+    pendingNextStepRef.current = null;
+    if (activeStickerThought) {
+      handleThoughtRead(activeStickerThought);
+      setActiveStickerThought(null);
+      setStickerQueue([]);
+    }
     if (gameState.settings.soundEnabled) {
       playMessageSend();
     }
@@ -415,6 +541,8 @@ export default function App() {
       timestamp: timeNow,
       status: 'read',
     };
+
+    setLastPlayerChoiceMsgId(playerMsg.id);
 
     // Apply stat impacts
     const statsUpdate = { ...gameState.stats };
@@ -435,6 +563,9 @@ export default function App() {
 
   // Skip wait immediately
   const handleSkipWait = () => {
+    pendingNextStepRef.current = null;
+    setActiveStickerThought(null);
+    setStickerQueue([]);
     setGameState((prev) => {
       if (!prev.waitingState) return prev;
       const nextInfo = prev.waitingState.nextDayOrStep;
@@ -461,6 +592,11 @@ export default function App() {
   // Jump to specific day
   const handleJumpToDay = (dayNumber: number) => {
     const targetDay = getDayData(dayNumber);
+    setLastPlayerChoiceMsgId(null);
+    pendingNextStepRef.current = null;
+    setActiveStickerThought(null);
+    setStickerQueue([]);
+    setShownStickerIds(new Set());
     setGameState((prev) => ({
       ...prev,
       currentDay: dayNumber,
@@ -469,6 +605,7 @@ export default function App() {
       waitingState: null,
       gameFinishedEnding: null,
       isInitialDarkness: false,
+      isBoyNameKnown: dayNumber > 1,
     }));
     setDevMenuOpen(false);
   };
@@ -476,6 +613,11 @@ export default function App() {
   // Restart game
   const handleRestart = () => {
     const day1 = STORY_DAYS[0];
+    setLastPlayerChoiceMsgId(null);
+    pendingNextStepRef.current = null;
+    setActiveStickerThought(null);
+    setStickerQueue([]);
+    setShownStickerIds(new Set());
     setGameState((prev) => ({
       ...prev,
       currentDay: 1,
@@ -485,6 +627,9 @@ export default function App() {
       waitingState: null,
       gameFinishedEnding: null,
       isInitialDarkness: false,
+      isBoyNameKnown: false,
+      discoveredThoughts: [],
+      readThoughtsHistory: [],
       stats: {
         affection: 10,
         courage: 20,
@@ -500,9 +645,23 @@ export default function App() {
 
   const isGirl = gameState.activePerspective === 'girl';
 
+  const isBoyNameKnown = Boolean(
+    gameState.isBoyNameKnown ||
+    gameState.currentDay > 1 ||
+    (gameState.messages || []).some((m) =>
+      m.text?.includes('В памяти всплывает имя... Марк') ||
+      m.text?.includes('Марк. Больше ни одной детали')
+    )
+  );
+
   // Actionable/read handler for thoughts (All thoughts live on desk outside phone and can be sent as messages)
   const handleThoughtAction = (thought: ThoughtBubble) => {
     playTapSound(0.25);
+    pendingNextStepRef.current = null;
+    if (activeStickerThought) {
+      setActiveStickerThought(null);
+      setStickerQueue([]);
+    }
 
     // Mark as read
     setGameState((prev) => ({
@@ -582,6 +741,31 @@ export default function App() {
     }));
   };
 
+  const handleCloseSticker = () => {
+    if (activeStickerThought) {
+      handleThoughtRead(activeStickerThought);
+    }
+
+    if (stickerQueue.length > 0) {
+      const [nextThought, ...remaining] = stickerQueue;
+      setActiveStickerThought(nextThought);
+      setStickerQueue(remaining);
+      setShownStickerIds((prev) => new Set([...prev, nextThought.id]));
+    } else {
+      setActiveStickerThought(null);
+      if (pendingNextStepRef.current) {
+        const nextId = pendingNextStepRef.current;
+        pendingNextStepRef.current = null;
+        setTimeout(() => {
+          setGameState((prev) => ({
+            ...prev,
+            currentStepId: nextId,
+          }));
+        }, 200 / (gameState.settings.speedMultiplier || 1));
+      }
+    }
+  };
+
   return (
     <PhoneBackground character={gameState.activePerspective}>
       {/* Main Smartphone Shell */}
@@ -599,6 +783,7 @@ export default function App() {
           activePerspective={gameState.activePerspective}
           currentDay={gameState.currentDay}
           isTyping={gameState.isTyping}
+          isBoyNameKnown={isBoyNameKnown}
           onOpenDevMenu={() => setDevMenuOpen(true)}
           onOpenThoughts={() => setIsThoughtsWindowOpen(true)}
           thoughtsCount={(gameState.discoveredThoughts || []).length}
@@ -628,6 +813,7 @@ export default function App() {
               key={msg.id}
               message={msg}
               activePerspective={gameState.activePerspective}
+              isBoyNameKnown={isBoyNameKnown}
               isNewest={index === gameState.messages.length - 1}
             />
           ))}
@@ -637,7 +823,7 @@ export default function App() {
             <div className="w-full flex justify-start mb-2 px-2 animate-fadeIn">
               <div className="bg-[#151a28] border border-cyan-500/30 rounded-2xl rounded-tl-xs px-3.5 py-2 flex items-center gap-2 shadow-[0_4px_16px_rgba(0,0,0,0.4)]">
                 <span className="text-[11px] font-sans text-cyan-300 font-medium">
-                  {gameState.activePerspective === 'girl' ? 'Марк' : 'Алиса'} печатает
+                  {gameState.activePerspective === 'girl' ? '....' : 'Алиса'} печатает
                 </span>
                 <div className="flex items-center gap-1">
                   <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -651,16 +837,13 @@ export default function App() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Paper Sticker Overlay on top of Phone Screen (persists until clicked or held to ignite & send) */}
+        {/* Paper Sticker Overlay on top of Phone Screen (persists until clicked, then disappears) */}
         {activeStickerThought && (
           <PaperStickerOverlay
             thought={activeStickerThought}
             activePerspective={gameState.activePerspective}
-            onClose={() => setActiveStickerThought(null)}
-            onSendThought={(thought) => {
-              handleThoughtAction(thought);
-              setActiveStickerThought(null);
-            }}
+            onClose={handleCloseSticker}
+            isBoyNameKnown={isBoyNameKnown}
           />
         )}
 
@@ -684,17 +867,20 @@ export default function App() {
             setIsThoughtsWindowOpen(false);
           }}
           readThoughtsHistory={gameState.readThoughtsHistory}
+          isBoyNameKnown={isBoyNameKnown}
         />
 
         {/* Bottom Dialogue Input Bar */}
         <ChatInputBar
           choices={availableChoices}
           onSelectChoice={handleSelectChoice}
-          onOpenActionPopup={() => setIsActionPopupOpen(true)}
+          onOpenActionPopup={() => setIsActionPopupOpen((prev) => !prev)}
+          isActionPopupOpen={isActionPopupOpen}
           isTypingOther={gameState.isTyping}
           activeCharacter={gameState.activePerspective}
           prefilledText={prefilledThoughtText}
           onClearPrefill={() => setPrefilledThoughtText('')}
+          isBoyNameKnown={isBoyNameKnown}
         />
 
         {/* Offline / Day Break Pause Overlay */}
@@ -739,6 +925,7 @@ export default function App() {
         isOpen={devMenuOpen}
         onClose={() => setDevMenuOpen(false)}
         activePerspective={gameState.activePerspective}
+        isBoyNameKnown={isBoyNameKnown}
         onTogglePerspective={() => {
           setGameState((prev) => ({
             ...prev,
@@ -754,6 +941,7 @@ export default function App() {
             settings: { ...prev.settings, speedMultiplier: sp },
           }));
         }}
+        onResetAll={handleRestart}
         onTriggerEnding={(ending) => {
           setGameState((prev) => ({
             ...prev,

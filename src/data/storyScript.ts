@@ -1,834 +1,1258 @@
 import { DayStory } from '../types/game';
 
+// Helper to count words in Russian/English for strict danger validation
+export function countWords(str: string): number {
+  return str.trim().split(/\s+/).filter(Boolean).length;
+}
+
 export const STORY_DAYS: DayStory[] = [
-  // ==========================================
-  // ДЕНЬ 1: Внезапное эхо сквозь туман Лимбо
-  // ==========================================
+  // =========================================================================
+  // ДЕНЬ 1: Непрошеная иконка, скепсис Алисы, проверка физики и ночной стелс
+  // Хронометраж прохождения: ~20 минут реального интерактивного времени
+  // =========================================================================
   {
     dayNumber: 1,
     title: "День 1: Черный экран и непрошеная иконка",
-    subtitle: "23:47 — Неизвестное приложение / 02:17 — Одинокий фонарь в серой мгле",
+    subtitle: "23:47 — Комната Алисы / 02:17 — Одинокий фонарь в серой мгле",
     initialPerspective: "girl",
-    startingStepId: "d1_girl_intro",
+    startingStepId: "d1_system_init",
     steps: {
-      d1_girl_intro: {
-        id: "d1_girl_intro",
+      // === АКТ 1: СЕТЕВОЕ ВТОРЖЕНИЕ И СКЕПСИС АЛИСЫ ===
+      d1_system_init: {
+        id: "d1_system_init",
         sender: "system",
-        text: "[Инициализация Null_Echo v0.9b... Поиск парного узла связи... Канал 0x7F-LIMBO захвачен]",
+        text: "[Инициализация Null_Echo... Прямой канал открыт]",
         activePerspective: "girl",
         thoughts: [
           {
             id: "t_d1_1",
-            text: "Что за странная иконка на экране? Черный круг с разорванной белой чертой... Я точно ничего не скачивала.",
+            text: "Что за чертовщина? Какое-то приложение само развернулось посреди ночи... Очередной кривой троян или чья-то глупая шутка? Хочется послать автора подальше... Но почему сердце так забилось? Словно я всю жизнь ждала, что в моей серой комнате случится что-то невозможное.",
             character: "girl",
-            category: "clue"
-          },
-          {
-            id: "t_d1_2",
-            text: "Почти полночь. Опять бессонница. Мысли о завтрашнем универе сдавливают виски... Снова видеть эти насмешливые лица.",
-            character: "girl",
-            category: "trauma"
+            category: "reflection"
           }
         ],
-        nextStepId: "d1_girl_choice_start"
+        nextStepId: "d1_boy_first_ping"
       },
 
-      d1_girl_choice_start: {
-        id: "d1_girl_choice_start",
+      d1_boy_first_ping: {
+        id: "d1_boy_first_ping",
+        sender: "boy",
+        text: "Эй?.. Экран замигал. Кто-то живой?",
+        activePerspective: "girl",
+        delayMs: 1500,
+        thoughts: [
+          {
+            id: "t_d1_alisa_irritation",
+            text: "«Кто-то живой?»... Серьезно? Звучит как дешевая завязка квеста от однокурсников. Надо бы ответить пожестче и выключить телефон... Но пальцы замерли над экраном. Черт возьми, неужели мне так отчаянно хочется, чтобы это было правдой?",
+            character: "girl",
+            category: "reflection"
+          }
+        ],
+        nextStepId: "d1_boy_burst1_help"
+      },
+
+      d1_boy_burst1_help: {
+        id: "d1_boy_burst1_help",
+        sender: "boy",
+        text: "Пожалуйста, не уходи, я не могу никому написать, я не понимаю где я",
+        activePerspective: "girl",
+        delayMs: 5000,
+        thoughts: [
+          {
+            id: "t_d1_help_reaction",
+            text: "«Не понимаю, где я»... Разыгрывает драму как по нотам. Сейчас попросит денег или скинет фишинговую ссылку. Нужно высмеять его и заблокировать... Но если это не розыгрыш? Если где-то там правда есть живой человек, которому нужна помощь?",
+            character: "girl",
+            category: "reflection"
+          }
+        ],
+        nextStepId: "d1_girl_choice_interrogate"
+      },
+
+      d1_girl_choice_interrogate: {
+        id: "d1_girl_choice_interrogate",
+        sender: "girl",
+        text: "",
+        activePerspective: "girl",
+        thoughts: [
+          {
+            id: "t_d1_interrogate",
+            text: "Устрою ему допрос с пристрастием. Посмотрим, как посыплется этот «спектакль». Хотя... если это окажется правдой, я готова вцепиться в этот шанс обеими руками.",
+            character: "girl",
+            category: "clue"
+          }
+        ],
+        choices: [
+          {
+            id: "c1_ask_emergency",
+            label: "«Если ты упал и ранен — почему не звонишь в 112 или родителям?»",
+            messageText: "Если ты упал и ранен — почему не звонишь в 112 или родителям? Набери экстренный номер.",
+            statImpact: { courage: 7 },
+            nextStepId: "d1_boy_resp_emergency_112"
+          },
+          {
+            id: "c1_ask_location",
+            label: "«Назови адрес или улицу. Я посмотрю по картам и вызову скорую».",
+            messageText: "Назови точный адрес: улицу, номер дома, какой-то ориентир? Я открою карты и вызову тебе скорую со своего телефона.",
+            statImpact: { courage: 6, affection: 5 },
+            nextStepId: "d1_boy_resp_location"
+          },
+          {
+            id: "c1_skeptical_prank",
+            label: "«Кто ты вообще? Если это чей-то глупый розыгрыш — мне не смешно».",
+            messageText: "Кто ты вообще такой? Если это очередной ночной розыгрыш однокурсников — мне совершенно не смешно.",
+            statImpact: { courage: 8 },
+            nextStepId: "d1_boy_resp_prank"
+          }
+        ]
+      },
+
+      // --- КОНТЕКСТНЫЙ ОТВЕТ 1: НА ВОПРОС ПРО 112 И РОДИТЕЛЕЙ ---
+      d1_boy_resp_emergency_112: {
+        id: "d1_boy_resp_emergency_112",
+        sender: "boy",
+        text: "Я пробовал звонить... В 112 только мертвый треск, а домашний номер сразу сбрасывает.",
+        activePerspective: "girl",
+        delayMs: 2200,
+        nextStepId: "d1_girl_choice_sarcasm"
+      },
+
+      // --- КОНТЕКСТНЫЙ ОТВЕТ 2: НА ПРЕДЛОЖЕНИЕ ПОСМОТРЕТЬ КАРТЫ И ВЫЗВАТЬ СКОРУЮ ---
+      d1_boy_resp_location: {
+        id: "d1_boy_resp_location",
+        sender: "boy",
+        text: "Я подошел к углу дома, но на синей табличке пусто — просто белый прямоугольник без букв.",
+        activePerspective: "girl",
+        delayMs: 2300,
+        nextStepId: "d1_girl_choice_sarcasm"
+      },
+
+      // --- КОНТЕКСТНЫЙ ОТВЕТ 3: НА ПОДОЗРЕНИЯ В РОЗЫГРЫШЕ ---
+      d1_boy_resp_prank: {
+        id: "d1_boy_resp_prank",
+        sender: "boy",
+        text: "Это не розыгрыш... Мне самому дико страшно. Я не знаю твоих однокурсников и не помню, как тут оказался.",
+        activePerspective: "girl",
+        delayMs: 2300,
+        nextStepId: "d1_girl_choice_sarcasm"
+      },
+
+      // Саркастическая реакция Алисы на ночные небылицы
+      d1_girl_choice_sarcasm: {
+        id: "d1_girl_choice_sarcasm",
+        sender: "girl",
+        text: "",
+        activePerspective: "girl",
+        thoughts: [
+          {
+            id: "t_d1_sarcasm_note",
+            text: "«Пустые таблички», «мертвый треск»... Складно заливает, прямо сценарий для фестиваля короткометражек. Надо ответить максимально язвительно, чтобы сбить спесь... Хотя черт возьми, как же хочется верить, что мир шире моей душной комнаты.",
+            character: "girl",
+            category: "reflection"
+          }
+        ],
+        choices: [
+          {
+            id: "c1_sarcasm_horror",
+            label: "«Потрясающий сценарий для дешевого хоррора. Сами сочиняли?»",
+            messageText: "Потрясающий сценарий для дешевого хоррора. Вы там всей общагой сочиняли?",
+            statImpact: { courage: 7 },
+            nextStepId: "d1_boy_resp_sarcasm_horror"
+          },
+          {
+            id: "c1_sarcasm_drama",
+            label: "«Мертвый треск и пустые таблички? Да ты прирожденный актер драматического театра».",
+            messageText: "Мертвый треск и пустые таблички? Да ты прирожденный актер драматического театра. Скажи еще, что за тобой тени из углов следят.",
+            statImpact: { courage: 8 },
+            nextStepId: "d1_boy_resp_sarcasm_drama"
+          },
+          {
+            id: "c1_sarcasm_aliens",
+            label: "«Очень убедительно. А белые единороги или пришельцы мимо еще не пролетали?»",
+            messageText: "Очень убедительно. А белые единороги или летающие тарелки мимо тебя еще не пролетали?",
+            statImpact: { courage: 6, affection: 4 },
+            nextStepId: "d1_boy_resp_sarcasm_aliens"
+          }
+        ]
+      },
+
+      // Реакции Марка на сарказм Алисы
+      d1_boy_resp_sarcasm_horror: {
+        id: "d1_boy_resp_sarcasm_horror",
+        sender: "boy",
+        text: "Думаешь, я развлекаюсь?! У меня руки трясутся не от смеха, а от дикого холода!",
+        activePerspective: "girl",
+        delayMs: 2200,
+        nextStepId: "d1_boy_sarcasm_followup"
+      },
+
+      d1_boy_resp_sarcasm_drama: {
+        id: "d1_boy_resp_sarcasm_drama",
+        sender: "boy",
+        text: "Да какая к черту драма?! Я не актер, мне просто страшно до одурения!",
+        activePerspective: "girl",
+        delayMs: 2200,
+        nextStepId: "d1_boy_sarcasm_followup"
+      },
+
+      d1_boy_resp_sarcasm_aliens: {
+        id: "d1_boy_resp_sarcasm_aliens",
+        sender: "boy",
+        text: "Смейся сколько влезет, но я не псих. Мне реально некуда бежать.",
+        activePerspective: "girl",
+        delayMs: 2200,
+        nextStepId: "d1_boy_sarcasm_followup"
+      },
+
+      d1_boy_sarcasm_followup: {
+        id: "d1_boy_sarcasm_followup",
+        sender: "boy",
+        text: "Тут даже ветра нет. Словно весь мир вымер или застыл на вечной паузе.",
+        activePerspective: "girl",
+        delayMs: 2300,
+        thoughts: [
+          {
+            id: "t_d1_sarcasm_doubt",
+            text: "Он огрызается так искренне... В шутках так не паникуют. Разум кричит: «тебя разводят, не будь наивной дурой!». Но сердце отчаянно цепляется за эту безумную надежду.",
+            character: "girl",
+            category: "reflection"
+          }
+        ],
+        nextStepId: "d1_girl_choice_test_physics"
+      },
+
+      // === АКТ 2: ЭМПИРИЧЕСКАЯ ПРОВЕРКА ФИЗИКИ МИРА ===
+      d1_girl_choice_test_physics: {
+        id: "d1_girl_choice_test_physics",
         sender: "girl",
         text: "",
         activePerspective: "girl",
         choices: [
           {
-            id: "c1_inspect_app",
-            label: "Попробовать смахнуть окно и удалить приложение",
-            messageText: "Что это за вирус? Почему ты не закрываешься?",
-            nextStepId: "d1_girl_swipe_fail",
-            statImpact: { courage: 2 }
+            id: "c1_test_sky_clock",
+            label: "«Проведи тест: посмотри на небо и на секундомер. Что со временем?»",
+            messageText: "Проведи тест: посмотри на небо — есть ли звезды или луна? И какое точное системное время на твоем экране?",
+            statImpact: { courage: 7 },
+            nextStepId: "d1_boy_resp_sky_clock"
           },
           {
-            id: "c1_type_question",
-            label: "Коснуться мигающей строки ввода: «Кто здесь?»",
-            messageText: "Кто здесь? Это какой-то розыгрыш одногруппников?",
-            nextStepId: "d1_system_connecting",
-            statImpact: { courage: 5 }
+            id: "c1_test_acoustic",
+            label: "«Хлопни в ладоши и послушай эхо от стен домов».",
+            messageText: "Хлопни громко в ладоши перед домом. Сколько секунд длится отражение звука от стен?",
+            statImpact: { courage: 6, affection: 5 },
+            nextStepId: "d1_boy_resp_acoustic"
           },
           {
-            id: "c1_silence_dots",
-            label: "Отправить осторожные три точки: «...»",
-            messageText: "...",
-            nextStepId: "d1_system_connecting",
-            statImpact: { dependence: 4 }
+            id: "c1_test_pockets",
+            label: "«Ощупай свои карманы. Должны быть ключи или документы с именем».",
+            messageText: "Проверь внутренние карманы куртки. Ключи, проездной, паспорт, водительские права? Хоть что-то с именем? Как тебя зовут?",
+            statImpact: { courage: 5, affection: 6 },
+            nextStepId: "d1_boy_resp_pockets"
           }
         ]
       },
 
-      d1_girl_swipe_fail: {
-        id: "d1_girl_swipe_fail",
-        sender: "system",
-        text: "[СИСТЕМА: Ошибка деинсталляции. Процесс защищен корневым сертификатом. Входящий пакет данных...]",
-        activePerspective: "girl",
-        delayMs: 1400,
-        nextStepId: "d1_boy_first_ping"
-      },
-
-      d1_system_connecting: {
-        id: "d1_system_connecting",
-        sender: "system",
-        text: "[СИСТЕМА: Текстовый мост стабилизирован. Пинг: 14мс. Удаленный абонент активен]",
-        activePerspective: "girl",
-        delayMs: 1200,
-        nextStepId: "d1_boy_first_ping"
-      },
-
-      // BURST 1: Mark wakes up and sends a sequence of 4 messages before prompting
-      d1_boy_first_ping: {
-        id: "d1_boy_first_ping",
+      // Контекстный ответ на небо и часы
+      d1_boy_resp_sky_clock: {
+        id: "d1_boy_resp_sky_clock",
         sender: "boy",
-        text: "Эй?.. Тут кто-нибудь есть? Экран наконец-то загорелся... Ответьте, умоляю, если это читает живой человек.",
+        text: "Посмотрел наверх... Неба нет, только сплошной низкий серый потолок без звезд и луны.",
+        activePerspective: "girl",
+        delayMs: 2200,
+        nextStepId: "d1_boy_clock_sub"
+      },
+
+      d1_boy_clock_sub: {
+        id: "d1_boy_clock_sub",
+        sender: "boy",
+        text: "А на часах ровно 02:17. Секундная стрелка замерла и не двигается.",
+        activePerspective: "girl",
+        delayMs: 2100,
+        thoughts: [
+          {
+            id: "t_d1_clock_frozen",
+            text: "Застывшее время, отсутствие звезд... Красивая сказка. Но если это правда аномальный карман? Если между нами сквозь километры и время протянулся настоящий провод?",
+            character: "girl",
+            category: "reflection"
+          }
+        ],
+        nextStepId: "d1_boy_pockets_after"
+      },
+
+      // Контекстный ответ на акустику
+      d1_boy_resp_acoustic: {
+        id: "d1_boy_resp_acoustic",
+        sender: "boy",
+        text: "Хлопнул изо всех сил перед девятиэтажкой... Звук оборвался мгновенно, будто в вате. Никакого эха.",
+        activePerspective: "girl",
+        delayMs: 2300,
+        thoughts: [
+          {
+            id: "t_d1_sound_absorb",
+            text: "Нулевая реверберация... Либо он виртуозно врет по заранее написанному тексту, либо законы физики там действительно мертвы. И если это так — я не имею права его бросить.",
+            character: "girl",
+            category: "clue"
+          }
+        ],
+        nextStepId: "d1_boy_pockets_after"
+      },
+
+      // Контекстный ответ на проверку карманов
+      d1_boy_resp_pockets: {
+        id: "d1_boy_resp_pockets",
+        sender: "boy",
+        text: "Ничего нет.",
+        activePerspective: "girl",
+        delayMs: 1800,
+        nextStepId: "d1_boy_pockets_after"
+      },
+
+      d1_boy_pockets_after: {
+        id: "d1_boy_pockets_after",
+        sender: "boy",
+        text: "Нащупал только тяжелый ключ с выбитым числом «42» и альпинистский карабин.",
+        activePerspective: "girl",
+        delayMs: 2400,
+        nextStepId: "d1_boy_name_answer"
+      },
+
+      d1_boy_name_answer: {
+        id: "d1_boy_name_answer",
+        sender: "boy",
+        text: "В памяти всплывает имя... Марк. Больше ни одной детали из прошлого.",
         activePerspective: "girl",
         delayMs: 2200,
         thoughts: [
           {
-            id: "t_d1_3",
-            text: "Он пишет в реальном времени... В словах чувствуется настоящий ужас.",
+            id: "t_d1_mark_intro",
+            text: "Марк... Звучит слишком по-настоящему для сетевого троллинга. Я всё еще ищу подвох и готовлю едкие реплики, но внутри уже всё горит от желания поверить ему.",
             character: "girl",
-            category: "reflection"
+            category: "clue"
           }
         ],
-        nextStepId: "d1_boy_burst1_m2"
+        nextStepId: "d1_girl_choice_name_give"
       },
 
-      d1_boy_burst1_m2: {
-        id: "d1_boy_burst1_m2",
-        sender: "boy",
-        text: "Я очнулся на ледяном асфальте... Голова раскалывается так, будто по черепу пришелся страшный удар при падении. Вокруг всё плывет и кружится перед глазами.",
-        activePerspective: "girl",
-        delayMs: 2500,
-        nextStepId: "d1_boy_burst1_m3"
-      },
-
-      d1_boy_burst1_m3: {
-        id: "d1_boy_burst1_m3",
-        sender: "boy",
-        text: "На мне моя походная штормовка, рукав разодран в клочья, пальцы в каменной пыли и ссадинах... Я даже встать на ноги толком не могу, опираюсь о холодный бетонный столб.",
-        activePerspective: "girl",
-        delayMs: 2700,
-        nextStepId: "d1_boy_burst1_m4"
-      },
-
-      d1_boy_burst1_m4: {
-        id: "d1_boy_burst1_m4",
-        sender: "boy",
-        text: "Пожалуйста, не закрывай окно... Скажи хоть слово, если ты видишь эти строки!",
-        activePerspective: "girl",
-        delayMs: 2000,
-        thoughts: [
-          {
-            id: "t_d1_4",
-            text: "Если это Денис или Катя из группы решили посмеяться надо мной среди ночи — я не поведусь. Но если человеку правда нужна помощь?..",
-            character: "girl",
-            category: "fear",
-            isActionable: true
-          }
-        ],
-        nextStepId: "d1_girl_choice_first_reply"
-      },
-
-      d1_girl_choice_first_reply: {
-        id: "d1_girl_choice_first_reply",
+      d1_girl_choice_name_give: {
+        id: "d1_girl_choice_name_give",
         sender: "girl",
         text: "",
         activePerspective: "girl",
         choices: [
           {
-            id: "c1_who_are_you",
-            label: "Кто ты такой? Как ты попал в мой телефон?",
-            messageText: "Кто ты такой? Как это приложение вообще установилось на мой телефон?",
-            statImpact: { courage: 4 },
-            nextStepId: "d1_boy_explain_who"
+            id: "c1_give_alisa_name",
+            label: "«Меня зовут Алиса. Пока не делай резких движений».",
+            messageText: "Меня зовут Алиса. Если у тебя контузия или шок — не делай резких движений. Осмотрись и скажи, что видишь на горизонте.",
+            statImpact: { affection: 6, courage: 5 },
+            nextStepId: "d1_boy_resp_name_alisa"
           },
           {
-            id: "c1_suspect_bullies",
-            label: "Если вы из университета решили поиздеваться — я блокирую номер.",
-            messageText: "Если вы опять из университета решили надо мной поиздеваться среди ночи — я прямо сейчас удаляю этот чат.",
-            statImpact: { courage: 6 },
-            nextStepId: "d1_boy_explain_who"
-          },
-          {
-            id: "c1_cautious_hello",
-            label: "Да, я читаю. Дыши спокойно. Что с тобой случилось?",
-            messageText: "Да, я читаю тебя. Дыши спокойно. Ты ранен? Что с тобой произошло?",
-            statImpact: { affection: 6, courage: 3 },
-            nextStepId: "d1_boy_explain_who"
+            id: "c1_strict_caution",
+            label: "«Я не стану называть свое имя. Держи дистанцию и докладывай обстановку».",
+            messageText: "Я не буду раскрывать личные данные. Ты можешь быть кем угодно. Докладывай только факты: что находится на проспекте?",
+            statImpact: { courage: 8 },
+            nextStepId: "d1_boy_resp_name_strict"
           }
         ]
       },
 
-      // BURST 2: Mark explains who he is, 112 failure, and the dead city environment (4 messages)
-      d1_boy_explain_who: {
-        id: "d1_boy_explain_who",
+      // Контекстный ответ на доверие и имя Алисы
+      d1_boy_resp_name_alisa: {
+        id: "d1_boy_resp_name_alisa",
         sender: "boy",
-        text: "Стой, не блокируй, умоляю! Я не из твоего университета и вообще никого не разыгрываю... Меня зовут Марк. Я сам понятия не имею, как эта программа заработала на разбитом экране.",
+        text: "Алиса... Спасибо тебе. С тобой уже не так дико страшно.",
+        activePerspective: "girl",
+        delayMs: 2200,
+        nextStepId: "d1_boy_survey_street"
+      },
+
+      // Контекстный ответ на холодную строгость Алисы
+      d1_boy_resp_name_strict: {
+        id: "d1_boy_resp_name_strict",
+        sender: "boy",
+        text: "Понимаю тебя... Я бы тоже не доверял незнакомцу посреди ночи.",
+        activePerspective: "girl",
+        delayMs: 2200,
+        nextStepId: "d1_boy_survey_street"
+      },
+
+      // === АКТ 3: ИССЛЕДОВАНИЕ ПРОСПЕКТА И БРОШЕННЫЙ ТРАМВАЙ ===
+      d1_boy_survey_street: {
+        id: "d1_boy_survey_street",
+        sender: "boy",
+        text: "Впереди широкий проспект. На ржавых рельсах стоит старый трамвай.",
         activePerspective: "girl",
         delayMs: 2400,
-        nextStepId: "d1_boy_burst2_m2"
+        nextStepId: "d1_boy_tram_desc_1"
       },
 
-      d1_boy_burst2_m2: {
-        id: "d1_boy_burst2_m2",
+      d1_boy_tram_desc_1: {
+        id: "d1_boy_tram_desc_1",
         sender: "boy",
-        text: "В службу 112 я пытался звонить первым делом! Но в трубке нет даже длинных гудков — только мертвый треск, переходящий в тяжелый глухой гул. Ни один номер не набирается. Полоски связи на нуле.",
+        text: "Один вагон. Двери перекошены, стекла в трещинах.",
         activePerspective: "girl",
-        delayMs: 2700,
-        nextStepId: "d1_boy_burst2_m3"
-      },
-
-      d1_boy_burst2_m3: {
-        id: "d1_boy_burst2_m3",
-        sender: "boy",
-        text: "А вокруг... Я иду вдоль бесконечного проспекта. Стоят панельные девятиэтажки, знакомые серые балконы, но в них нет НИ ОДНОГО горящего окна. Ни машин на парковках, ни людей, ни бродячих собак. Мертвая, абсолютная тишина.",
-        activePerspective: "girl",
-        delayMs: 3100,
-        nextStepId: "d1_boy_burst2_m4"
-      },
-
-      d1_boy_burst2_m4: {
-        id: "d1_boy_burst2_m4",
-        sender: "boy",
-        text: "И этот туман... Он стелется прямо над асфальтом, поднимаясь до колен. Пахнет странно — смесью озона, сырого известняка и перегоревших ламп. Я чувствую ледяной холод сквозь куртку, но пар изо рта не идет вообще.",
-        activePerspective: "girl",
-        delayMs: 3000,
+        delayMs: 2200,
         thoughts: [
           {
-            id: "t_d1_7",
-            text: "Пар изо рта не идет на морозе?.. Это физически невозможно в реальном мире.",
+            id: "t_d1_tram_model",
+            text: "Линию с трамваями у нас закрыли годы назад. Либо это дотошный исторический пранк от людей из универа, либо... он застрял в нашем городе, только в его мертвом слепке.",
             character: "girl",
             category: "clue"
-          },
-          {
-            id: "t_d1_8",
-            text: "За моим окном монотонно барабанит дождь по карнизу. Моя комната кажется теплым островком.",
-            character: "girl",
-            category: "reflection"
           }
         ],
-        nextStepId: "d1_girl_choice_weather"
+        nextStepId: "d1_girl_choice_tram_search"
       },
 
-      d1_girl_choice_weather: {
-        id: "d1_girl_choice_weather",
+      d1_girl_choice_tram_search: {
+        id: "d1_girl_choice_tram_search",
         sender: "girl",
         text: "",
         activePerspective: "girl",
         choices: [
           {
-            id: "c1_distrust_prank_weather",
-            label: "Откуда мне знать, что ты не врешь? Что вообще вокруг тебя?",
-            messageText: "Откуда мне знать, что ты не разыгрываешь меня? Докажи: посмотри наверх, что на небе?",
+            id: "c1_enter_tram",
+            label: "«Зайди в салон трамвая. Там могут быть инструменты или карта маршрута».",
+            messageText: "Осторожно загляни в салон. Проверь кабину водителя: там может быть план маршрута, фонарик или аптечка.",
+            statImpact: { courage: 7, affection: 5 },
+            nextStepId: "d1_boy_enter_tram_steps"
+          },
+          {
+            id: "c1_bypass_tram",
+            label: "«Не лезь внутрь! В замкнутом пространстве ты окажешься в ловушке».",
+            messageText: "Не заходи в узкий салон! Если там что-то появится — у тебя не будет путей отхода. Обойди вагон по обочине.",
             statImpact: { courage: 6 },
-            nextStepId: "d1_boy_sky_answer"
-          },
-          {
-            id: "c1_check_sky",
-            label: "Посмотри на небо. Звезды или луна есть?",
-            messageText: "Подними голову вверх. Что на небе? Звезды, луна, облака?",
-            statImpact: { affection: 4, courage: 3 },
-            nextStepId: "d1_boy_sky_answer"
-          },
-          {
-            id: "c1_check_pockets_early",
-            label: "Марк, проверь свои карманы! Что у тебя с собой из вещей?",
-            messageText: "Марк, проверь карманы своей походной куртки! Должны же быть ключи, документы или хоть что-то?",
-            statImpact: { courage: 5, affection: 4 },
-            nextStepId: "d1_boy_sky_answer"
+            nextStepId: "d1_boy_bypass_tram_steps"
           }
         ]
       },
 
-      // BURST 3: Mark describes the ash dome sky, frozen clock 02:17, and items in pockets (4 messages)
-      d1_boy_sky_answer: {
-        id: "d1_boy_sky_answer",
+      d1_boy_enter_tram_steps: {
+        id: "d1_boy_enter_tram_steps",
         sender: "boy",
-        text: "Я смотрю вверх прямо сейчас... Тут нет неба, Алиса. Над головой просто плотный, неподвижный серо-пепельный купол. Ни луны, ни звезд, ни просветов.",
+        text: "Залез через разбитую заднюю створку. Внутри сыро.",
+        activePerspective: "girl",
+        delayMs: 2300,
+        nextStepId: "d1_boy_tram_clues"
+      },
+
+      d1_boy_tram_clues: {
+        id: "d1_boy_tram_clues",
+        sender: "boy",
+        text: "Нашел обгоревший билет. Дата — 14 ноября, два года назад.",
+        activePerspective: "girl",
+        delayMs: 2500,
+        thoughts: [
+          {
+            id: "t_d1_tram_date",
+            text: "14 ноября... Дата той аварии. Нет, шутники не могли продумать всё до таких мелочей. Кажется, этот кошмар реален. И эта невозможная связь — тоже.",
+            character: "girl",
+            category: "clue"
+          }
+        ],
+        nextStepId: "d1_boy_tram_writing"
+      },
+
+      d1_boy_tram_writing: {
+        id: "d1_boy_tram_writing",
+        sender: "boy",
+        text: "На стекле кабины надпись сажей: «02:17 — не смотри в отражения».",
         activePerspective: "girl",
         delayMs: 2600,
-        nextStepId: "d1_boy_burst3_m2"
+        nextStepId: "d1_boy_threat_begins"
       },
 
-      d1_boy_burst3_m2: {
-        id: "d1_boy_burst3_m2",
+      d1_boy_bypass_tram_steps: {
+        id: "d1_boy_bypass_tram_steps",
         sender: "boy",
-        text: "А вверху экрана... часы намертво застыли на 02:17. И секунды не двигаются уже целую вечность. У тебя сколько сейчас времени?",
+        text: "Иду вдоль рельсов. Ржавчина на металле толщиной в палец.",
         activePerspective: "girl",
-        delayMs: 2500,
-        nextStepId: "d1_boy_burst3_m3"
+        delayMs: 2300,
+        nextStepId: "d1_boy_threat_begins"
       },
 
-      d1_boy_burst3_m3: {
-        id: "d1_boy_burst3_m3",
+      // === АКТ 4: ПЕРВЫЙ СМЕРТЕЛЬНЫЙ СТЕЛС (СТРОГО <= 5 СЛОВ ДЛЯ МАРКА) ===
+      d1_boy_threat_begins: {
+        id: "d1_boy_threat_begins",
         sender: "boy",
-        text: "Сейчас... Я проверяю карманы куртки, как ты просила. В правом кармане — латунный ключ с потертой синей биркой «42». И тяжелый металлический карабин...",
+        text: "Стой. Сверху на крыше удар.", // 5 words
         activePerspective: "girl",
-        delayMs: 3100,
-        nextStepId: "d1_boy_burst3_m4"
-      },
-
-      d1_boy_burst3_m4: {
-        id: "d1_boy_burst3_m4",
-        sender: "boy",
-        text: "А во внутреннем кармане — старые механические часы... Стекло разбито паутиной трещин, а стрелки замерли... Боже. На них тоже ровно 02:17. Точно как на экране телефона.",
-        activePerspective: "girl",
-        delayMs: 3300,
+        delayMs: 1600,
+        glitchEffect: true,
         thoughts: [
           {
-            id: "t_d1_13",
-            text: "Ключ от квартиры 42, карабин и разбитые часы на 02:17... Но что с ним произошло?",
+            id: "t_d1_threat_alert",
+            text: "Грохот по крыше... Всё внутри сжалось. Я так боялась оказаться обманутой дурочкой, а сейчас молюсь только об одном: чтобы он успел спрятаться!",
             character: "girl",
-            category: "clue"
-          },
-          {
-            id: "t_d1_14",
-            text: "Время остановилось ровно в 02:17. Это похоже на какую-то аномалию...",
-            character: "girl",
-            category: "fear",
-            isActionable: true
+            category: "fear"
           }
         ],
-        nextStepId: "d1_girl_choice_watch_reaction"
+        nextStepId: "d1_boy_threat_2"
       },
 
-      d1_girl_choice_watch_reaction: {
-        id: "d1_girl_choice_watch_reaction",
+      d1_boy_threat_2: {
+        id: "d1_boy_threat_2",
+        sender: "boy",
+        text: "Крыша вагона прогнулась вниз.", // 4 words
+        activePerspective: "girl",
+        delayMs: 1700,
+        glitchEffect: true,
+        nextStepId: "d1_boy_threat_3"
+      },
+
+      d1_boy_threat_3: {
+        id: "d1_boy_threat_3",
+        sender: "boy",
+        text: "Слышу скрежет длинных когтей.", // 4 words
+        activePerspective: "girl",
+        delayMs: 1800,
+        nextStepId: "d1_boy_threat_4"
+      },
+
+      d1_boy_threat_4: {
+        id: "d1_boy_threat_4",
+        sender: "boy",
+        text: "Капает черная смола. Воняет.", // 4 words
+        activePerspective: "girl",
+        delayMs: 1600,
+        thoughts: [
+          {
+            id: "t_d1_danger_reaction",
+            text: "Смола, скрежет когтей... К черту сарказм и гордость, он должен выжить! Марк, только держись!",
+            character: "girl",
+            category: "fear"
+          }
+        ],
+        nextStepId: "d1_girl_choice_emergency_guide"
+      },
+
+      d1_girl_choice_emergency_guide: {
+        id: "d1_girl_choice_emergency_guide",
         sender: "girl",
         text: "",
         activePerspective: "girl",
         choices: [
           {
-            id: "c1_distrust_time_anomaly",
-            label: "Часы на 02:17?.. Это звучит как бред или розыгрыш.",
-            messageText: "Часы остановились на 02:17, пустой город... Марк, это звучит безумно. Ты уверен, что не разыгрываешь меня?",
-            statImpact: { courage: 6 },
-            nextStepId: "d1_boy_cliff_memory_flow"
+            id: "c1_stealth_crawl",
+            label: "«Марк, сползай под нижние сиденья и не издавай ни звука!»",
+            messageText: "Марк, плавно ложись на пол под сиденья! Прижми локти к ребрам, дыши через ткань куртки и не шевелись!",
+            statImpact: { courage: 8, affection: 6 },
+            nextStepId: "d1_boy_stealth_crawl_1"
           },
           {
-            id: "c1_cliff_fall_ask",
-            label: "Марк, ты помнишь, где ты был до того, как разбились часы?",
-            messageText: "Марк, ты помнишь, что случилось до того, как разбились часы? Где ты был?",
-            statImpact: { affection: 7, courage: 4 },
-            nextStepId: "d1_boy_cliff_memory_flow"
-          },
-          {
-            id: "c1_action_give_name",
-            label: "Меня зовут Алиса. Не делай резких движений, Марк.",
-            messageText: "Меня зовут Алиса. Дыши медленно, Марк. Мы разберемся вместе, ты не один.",
-            statImpact: { affection: 8, courage: 5 },
-            nextStepId: "d1_boy_cliff_memory_flow"
+            id: "c1_drop_through_window",
+            label: "«Вываливайся через разбитое окно в траву с теневой стороны!»",
+            messageText: "Вылезай через нижний проем разбитого окна в траву с противоположной стороны! Бесшумно скатись по насыпи!",
+            statImpact: { courage: 7, affection: 5 },
+            nextStepId: "d1_boy_stealth_window_1"
           }
         ]
       },
 
-      // BURST 4: Mark's amnesia - he remembers nothing except his name and feelings (4 messages)
-      d1_boy_cliff_memory_flow: {
-        id: "d1_boy_cliff_memory_flow",
+      // --- ВЕТКА 1: ПОД СИДЕНЬЯМИ (СТРОГО <= 5 СЛОВ) ---
+      d1_boy_stealth_crawl_1: {
+        id: "d1_boy_stealth_crawl_1",
         sender: "boy",
-        text: "Алиса... Какое теплое и красивое имя. Спасибо тебе. Когда я произношу его, паника в груди чуть-чуть отступает.",
+        text: "Лег на пол. Замер.", // 4 words
         activePerspective: "girl",
-        delayMs: 2500,
-        nextStepId: "d1_boy_burst4_m2"
+        delayMs: 1500,
+        nextStepId: "d1_boy_stealth_crawl_2"
       },
 
-      d1_boy_burst4_m2: {
-        id: "d1_boy_burst4_m2",
+      d1_boy_stealth_crawl_2: {
+        id: "d1_boy_stealth_crawl_2",
         sender: "boy",
-        text: "Ты спросила, что я помню... Я отчаянно пытаюсь зацепиться за мысли, но в голове только серый шум и вспышки резкой боли. Словно ластиком стерли всю мою жизнь.",
+        text: "Смола капает рядом. Шипит.", // 4 words
         activePerspective: "girl",
-        delayMs: 3000,
-        nextStepId: "d1_boy_burst4_m3"
+        delayMs: 1700,
+        glitchEffect: true,
+        nextStepId: "d1_boy_stealth_crawl_3"
       },
 
-      d1_boy_burst4_m3: {
-        id: "d1_boy_burst4_m3",
+      d1_boy_stealth_crawl_3: {
+        id: "d1_boy_stealth_crawl_3",
         sender: "boy",
-        text: "Я помню только свое имя — Марк. И смутное ощущение, что я бесконечно долго шел сквозь холод и темноту, пытаясь куда-то успеть... А потом очнулся здесь на асфальте с раскалывающейся головой.",
+        text: "Оно спрыгнуло на асфальт.", // 4 words
         activePerspective: "girl",
-        delayMs: 3200,
-        nextStepId: "d1_boy_burst4_m4"
+        delayMs: 1800,
+        nextStepId: "d1_boy_stealth_crawl_4"
       },
 
-      d1_boy_burst4_m4: {
-        id: "d1_boy_burst4_m4",
+      d1_boy_stealth_crawl_4: {
+        id: "d1_boy_stealth_crawl_4",
         sender: "boy",
-        text: "Почему вокруг ни души? Где жители этих домов? Неужели город эвакуировали из-за аварии, а меня забыли?.. Мне страшно, Алиса.",
+        text: "Огромная масса без глаз.", // 4 words
         activePerspective: "girl",
-        delayMs: 3200,
-        thoughts: [
-          {
-            id: "t_d1_15",
-            text: "У него посттравматическая амнезия... Он совсем ничего не помнит, кроме своего имени.",
-            character: "girl",
-            category: "clue"
-          },
-          {
-            id: "t_d1_16",
-            text: "Он напуган до смерти. Я должна помочь ему держаться и найти укрытие.",
-            character: "girl",
-            category: "hope",
-            isActionable: true
-          }
-        ],
-        nextStepId: "d1_girl_choice_cliff_empathy"
+        delayMs: 1800,
+        nextStepId: "d1_boy_chase_trigger"
       },
 
-      d1_girl_choice_cliff_empathy: {
-        id: "d1_girl_choice_cliff_empathy",
-        sender: "girl",
-        text: "",
+      // --- ВЕТКА 2: ЧЕРЕЗ ОКНО (СТРОГО <= 5 СЛОВ) ---
+      d1_boy_stealth_window_1: {
+        id: "d1_boy_stealth_window_1",
+        sender: "boy",
+        text: "Вывалился в траву. Тихо.", // 4 words
         activePerspective: "girl",
-        choices: [
-          {
-            id: "c1_distrust_amnesia",
-            label: "Ты правда помнишь только имя? Или скрываешь что-то?",
-            messageText: "Ты правда ничего не помнишь, кроме имени, или просто не хочешь рассказывать? Кто ты на самом деле?",
-            statImpact: { courage: 6 },
-            nextStepId: "d1_boy_room_ask_flow"
-          },
-          {
-            id: "c1_mountain_empathy",
-            label: "Марк, не паникуй из-за памяти. Память вернется постепенно.",
-            messageText: "Марк, не пытайся насильно вспомнить всё сразу, если голова раскалывается. Память вернется постепенно. Главное — дыши.",
-            statImpact: { affection: 8, dependence: 5 },
-            nextStepId: "d1_boy_room_ask_flow"
-          },
-          {
-            id: "c1_action_comfort_pain",
-            label: "Я с тобой. Мы обязательно всё выясним вместе.",
-            messageText: "Я с тобой на связи, Марк. Мы обязательно во всем разберемся вместе. Расскажи, что вокруг.",
-            statImpact: { affection: 9 },
-            nextStepId: "d1_boy_room_ask_flow"
-          }
-        ]
+        delayMs: 1500,
+        nextStepId: "d1_boy_stealth_window_2"
       },
 
-      // BURST 5: Mark connects with Alice's world, then senses the approaching Entity (4 messages)
-      d1_boy_room_ask_flow: {
-        id: "d1_boy_room_ask_flow",
+      d1_boy_stealth_window_2: {
+        id: "d1_boy_stealth_window_2",
         sender: "boy",
-        text: "Ты тоже чувствуешь эту усталость от людей, Алиса?.. Расскажи мне что-нибудь о своем мире. Где ты сейчас? В какой комнате?",
+        text: "Пополз за бетонный бордюр.", // 4 words
         activePerspective: "girl",
-        delayMs: 2700,
-        nextStepId: "d1_boy_burst5_m2"
+        delayMs: 1700,
+        nextStepId: "d1_boy_stealth_window_3"
       },
 
-      d1_boy_burst5_m2: {
-        id: "d1_boy_burst5_m2",
+      d1_boy_stealth_window_3: {
+        id: "d1_boy_stealth_window_3",
         sender: "boy",
-        text: "Мне жизненно необходимо слышать детали настоящей, теплой жизни. Запах заваренного чая, шорох одеяла... Это словно якорь среди этих мертвых бетонных стен.",
-        activePerspective: "girl",
-        delayMs: 2900,
-        nextStepId: "d1_boy_burst5_m3"
-      },
-
-      d1_boy_burst5_m3: {
-        id: "d1_boy_burst5_m3",
-        sender: "boy",
-        text: "Алиса... Стой. Замолчи на секунду. Не пиши ничего. Пожалуйста.",
+        text: "Оно проломило крышу вагона.", // 4 words
         activePerspective: "girl",
         delayMs: 1800,
         glitchEffect: true,
-        nextStepId: "d1_boy_burst5_m4"
+        nextStepId: "d1_boy_chase_trigger"
       },
 
-      d1_boy_burst5_m4: {
-        id: "d1_boy_burst5_m4",
+      // === АКТ 5: ПОГОНЯ ПО ДВОРАМ И ПРОРЫВ В БОМБОУБЕЖИЩЕ (СТРОГО <= 5 СЛОВ) ===
+      d1_boy_chase_trigger: {
+        id: "d1_boy_chase_trigger",
         sender: "boy",
-        text: "В тумане... дальше по проспекту. Там что-то шевелится. Я слышу тяжелый, скребущий звук, как будто по сырому асфальту волочат ржавые металлические цепи. И фонарь в ста метрах впереди только что со звоном погас.",
+        text: "Оно почуяло. Поворачивает голову.", // 4 words
         activePerspective: "girl",
-        delayMs: 3300,
+        delayMs: 1600,
+        glitchEffect: true,
         thoughts: [
           {
-            id: "t_d1_20",
-            text: "Господи... Он там не один в этом тумане. Что-то приближается к нему!",
+            id: "t_d1_chase_alarm",
+            text: "Оно видит его! Если это сон — разбудите меня, если реальность — Марк, беги изо всех сил!",
             character: "girl",
             category: "fear"
-          },
-          {
-            id: "t_d1_21",
-            text: "Надо срочно сказать ему спрятаться! Нельзя оставаться посреди открытой дороги!",
-            character: "girl",
-            category: "clue",
-            isActionable: true
           }
         ],
-        nextStepId: "d1_girl_choice_threat_action"
+        nextStepId: "d1_girl_choice_chase_direction"
       },
 
-      d1_girl_choice_threat_action: {
-        id: "d1_girl_choice_threat_action",
+      d1_girl_choice_chase_direction: {
+        id: "d1_girl_choice_chase_direction",
         sender: "girl",
         text: "",
         activePerspective: "girl",
         choices: [
           {
-            id: "c1_distrust_trap_threat",
-            label: "Не двигайся и не шуми! Вдруг это ловушка?",
-            messageText: "Замри на месте! Не издавай ни звука и убери яркость экрана на минимум. Вдруг это ловушка?",
-            statImpact: { courage: 6 },
-            nextStepId: "d1_boy_running_to_shelter"
+            id: "c1_run_alley_vault",
+            label: "«Марк, беги в арку панельки слева! Там должен быть спуск в подвал!»",
+            messageText: "Марк, срывайся и беги в темную арку слева! Там типичная советская застройка — во дворе обязательно есть наклонный вход в бомбоубежище!",
+            statImpact: { courage: 9, affection: 6 },
+            nextStepId: "d1_boy_chase_run_1"
           },
           {
-            id: "c1_action_hide_vestibule",
-            label: "Марк, уходи с дороги! Беги в ближайший подъезд!",
-            messageText: "Марк, не стой на открытом проспекте! Забегай в ближайший подъезд или за угол панельного дома!",
-            statImpact: { courage: 8, affection: 6 },
-            nextStepId: "d1_boy_running_to_shelter"
-          },
-          {
-            id: "c1_action_run_opposite",
-            label: "Разворачивайся и беги назад со всех ног!",
-            messageText: "Разворачивайся и беги назад в темноту со всех ног! Не оглядывайся!",
-            statImpact: { courage: 6 },
-            nextStepId: "d1_boy_running_to_shelter"
+            id: "c1_zigzag_courtyard",
+            label: "«Петляй зигзагом между трансформаторными будками!»",
+            messageText: "Не беги по прямой! Петляй между бетонными гаражами и трансформаторной будкой, срезай углы!",
+            statImpact: { courage: 8, affection: 5 },
+            nextStepId: "d1_boy_chase_run_1"
           }
         ]
       },
 
-      // BURST 6: Mark dashes into shelter, Entity passes by, safe at radiator (4 messages)
-      d1_boy_running_to_shelter: {
-        id: "d1_boy_running_to_shelter",
+      d1_boy_chase_run_1: {
+        id: "d1_boy_chase_run_1",
         sender: "boy",
-        text: "Бегу... Дыхание перехватило, холод режет горло! Справа подъезд панельки с массивной приоткрытой железной дверью. Я проскользнул в темный тамбур и прикрыл створку!",
+        text: "Бегу изо всех сил.", // 4 words
         activePerspective: "girl",
-        delayMs: 2800,
-        nextStepId: "d1_boy_burst6_m2"
+        delayMs: 1400,
+        nextStepId: "d1_boy_chase_run_2"
       },
 
-      d1_boy_burst6_m2: {
-        id: "d1_boy_burst6_m2",
+      d1_boy_chase_run_2: {
+        id: "d1_boy_chase_run_2",
         sender: "boy",
-        text: "Оно... прошло прямо мимо. Сквозь грязное стекло двери я видел, как в тумане медленно скользнула огромная смоляная масса... Без ног, словно тяжелый клубящийся сгусток тьмы. От нее разило болотной гнилью и жженым железом.",
+        text: "Сзади вой. Земля дрожит.", // 4 words
         activePerspective: "girl",
-        delayMs: 3500,
-        nextStepId: "d1_boy_burst6_m3"
+        delayMs: 1500,
+        glitchEffect: true,
+        nextStepId: "d1_boy_chase_run_3"
       },
 
-      d1_boy_burst6_m3: {
-        id: "d1_boy_burst6_m3",
+      d1_boy_chase_run_3: {
+        id: "d1_boy_chase_run_3",
         sender: "boy",
-        text: "Скрежет цепей затих дальше по проспекту. Я сижу на ступеньках, прижавшись спиной к еле теплой батарее в подъезде. Руки дрожат, но здесь сухо и ветер не достает.",
+        text: "Впереди железная гермодверь убежища.", // 4 words
         activePerspective: "girl",
-        delayMs: 2900,
-        nextStepId: "d1_boy_burst6_m4"
+        delayMs: 1600,
+        nextStepId: "d1_boy_chase_run_4"
       },
 
-      d1_boy_burst6_m4: {
-        id: "d1_boy_burst6_m4",
+      d1_boy_chase_run_4: {
+        id: "d1_boy_chase_run_4",
         sender: "boy",
-        text: "Алиса... Если бы ты не крикнула мне спрятаться, я бы стоял посреди проспекта как вкопанный. Твои сообщения спасли мне жизнь.",
+        text: "Рванул штурвал. Влетел внутрь.", // 4 words
+        activePerspective: "girl",
+        delayMs: 1500,
+        nextStepId: "d1_boy_chase_run_5"
+      },
+
+      d1_boy_chase_run_5: {
+        id: "d1_boy_chase_run_5",
+        sender: "boy",
+        text: "Захлопнул засов. Удар снаружи!", // 4 words
+        activePerspective: "girl",
+        delayMs: 1700,
+        glitchEffect: true,
+        thoughts: [
+          {
+            id: "t_d1_vault_impact",
+            text: "Удар в сталь... Пожалуйста, выдержи. Я не могу потерять его прямо сейчас, когда наконец нашла что-то настоящее.",
+            character: "girl",
+            category: "fear"
+          }
+        ],
+        nextStepId: "d1_boy_chase_run_6"
+      },
+
+      d1_boy_chase_run_6: {
+        id: "d1_boy_chase_run_6",
+        sender: "boy",
+        text: "Сталь гудит. Но держит.", // 4 words
+        activePerspective: "girl",
+        delayMs: 2000,
+        nextStepId: "d1_boy_chase_run_7"
+      },
+
+      d1_boy_chase_run_7: {
+        id: "d1_boy_chase_run_7",
+        sender: "boy",
+        text: "Шаги удаляются. Я спасся.", // 4 words
+        activePerspective: "girl",
+        delayMs: 2300,
+        nextStepId: "d1_boy_vault_safe"
+      },
+
+      // === АКТ 6: УБЕЖИЩЕ, ПЕРЕВЯЗКА И НОЧНОЕ ПЕРЕМИРИЕ ===
+      d1_boy_vault_safe: {
+        id: "d1_boy_vault_safe",
+        sender: "boy",
+        text: "Сполз по стене на бетонный пол. Сердце колотится в висках.",
         activePerspective: "girl",
         delayMs: 2600,
         thoughts: [
           {
-            id: "t_d1_24",
-            text: "Его слова... Они отдаются странным теплом в груди. Меня давно никто так искренне не благодарил.",
+            id: "t_d1_safe_sigh",
+            text: "Засов выдержал. У меня трясутся руки... Весь вечер я язвила и пряталась за маской циника, боясь поверить. Но это реально. Он реален. И я не отпущу эту нить.",
             character: "girl",
             category: "hope"
-          },
-          {
-            id: "t_d1_25",
-            text: "Уже полпервого ночи. Завтра в восемь утра будильник в университет...",
-            character: "girl",
-            category: "reflection"
           }
         ],
-        nextStepId: "d1_girl_choice_comfort_shelter"
+        nextStepId: "d1_boy_first_aid_report"
       },
 
-      d1_girl_choice_comfort_shelter: {
-        id: "d1_girl_choice_comfort_shelter",
+      d1_boy_first_aid_report: {
+        id: "d1_boy_first_aid_report",
+        sender: "boy",
+        text: "Нашел в шкафу старый фонарь с динамо-машинкой и моток сухой марли.",
+        activePerspective: "girl",
+        delayMs: 2700,
+        nextStepId: "d1_boy_wound_bind"
+      },
+
+      d1_boy_wound_bind: {
+        id: "d1_boy_wound_bind",
+        sender: "boy",
+        text: "Перевязал ссадины на ладонях. Здесь пахнет сухой известью и железом.",
+        activePerspective: "girl",
+        delayMs: 2500,
+        nextStepId: "d1_girl_choice_vulnerability"
+      },
+
+      d1_girl_choice_vulnerability: {
+        id: "d1_girl_choice_vulnerability",
+        sender: "girl",
+        text: "",
+        activePerspective: "girl",
+        thoughts: [
+          {
+            id: "t_d1_vulnerability_girl",
+            text: "После травли в универе я поклялась никого не подпускать. Защищалась сарказмом и колючками. А сейчас смотрю на мигающий курсор и понимаю: я больше не одна в этой темноте.",
+            character: "girl",
+            category: "trauma"
+          }
+        ],
+        choices: [
+          {
+            id: "c1_confess_isolation",
+            label: "«Прости, что сначала грубила. Я никому не доверяю после травли в универе».",
+            messageText: "Прости, что сначала общалась так агрессивно. В универе надо мной часто издеваются, и я привыкла защищаться нападением. Спасибо, что выжил.",
+            statImpact: { affection: 9, dependence: 6, courage: 6 },
+            nextStepId: "d1_boy_resp_confess_1"
+          },
+          {
+            id: "c1_keep_analytic_mask",
+            label: "«Ты действовал по инструкции. Пока мы на связи — твои шансы выжить растут».",
+            messageText: "Ты четко выполнил все команды. Пока между нами держится этот сокет — я продолжу анализировать твои данные и строить маршруты.",
+            statImpact: { courage: 8, affection: 6 },
+            nextStepId: "d1_boy_resp_analytic_1"
+          }
+        ]
+      },
+
+      // Контекстный ответ на признание Алисы об издевках и защите
+      d1_boy_resp_confess_1: {
+        id: "d1_boy_resp_confess_1",
+        sender: "boy",
+        text: "Алиса... Тебе не за что извиняться. Я понимаю, каково это — когда приходится защищаться от всех.",
+        activePerspective: "girl",
+        delayMs: 2600,
+        nextStepId: "d1_boy_resp_confess_2"
+      },
+
+      d1_boy_resp_confess_2: {
+        id: "d1_boy_resp_confess_2",
+        sender: "boy",
+        text: "Ты спасла мне жизнь. Я никогда не забуду, что ты не бросила меня в этой темноте.",
+        activePerspective: "girl",
+        delayMs: 2500,
+        nextStepId: "d1_girl_choice_night_protocol"
+      },
+
+      // Контекстный ответ на сдержанную аналитическую позицию Алисы
+      d1_boy_resp_analytic_1: {
+        id: "d1_boy_resp_analytic_1",
+        sender: "boy",
+        text: "Спасибо тебе за хладнокровие. Если бы не твои четкие расчеты — я бы погиб на тех рельсах.",
+        activePerspective: "girl",
+        delayMs: 2600,
+        nextStepId: "d1_boy_resp_analytic_2"
+      },
+
+      d1_boy_resp_analytic_2: {
+        id: "d1_boy_resp_analytic_2",
+        sender: "boy",
+        text: "Я полностью доверяю твоим инструкциям. Буду ждать твоих указаний.",
+        activePerspective: "girl",
+        delayMs: 2400,
+        nextStepId: "d1_girl_choice_night_protocol"
+      },
+
+      d1_girl_choice_night_protocol: {
+        id: "d1_girl_choice_night_protocol",
         sender: "girl",
         text: "",
         activePerspective: "girl",
         choices: [
           {
-            id: "c1_distrust_goodnight",
-            label: "Я всё еще не понимаю, кто ты, но сиди тихо. Мне надо поспать.",
-            messageText: "Я всё еще не понимаю, кто ты и как работает этот чат, но сиди тихо в тамбуре до утра. Мне нужно поспать перед учебой.",
-            statImpact: { courage: 5 },
-            nextStepId: "d1_boy_final_goodnight"
+            id: "c1_sleep_agreement",
+            label: "«Не выходи из убежища до утра. Я подключу зарядку и посплю пару часов».",
+            messageText: "Забаррикадируй гермодверь изнутри и ложись на деревянные нары. Я оставлю приложение активным на зарядке и посплю три часа перед парами. Напиши сразу, как забрезжит рассвет.",
+            statImpact: { courage: 7, affection: 8 },
+            nextStepId: "d1_boy_goodnight_sleep"
           },
           {
-            id: "c1_stay_inside",
-            label: "Сиди в тамбуре и не выходи до утра. Я на связи.",
-            messageText: "Слава богу, ты успел... Сиди тихо на лестнице и ни в коем случае не выходи наружу в туман. Я оставлю приложение открытым.",
-            statImpact: { affection: 8, courage: 5 },
-            nextStepId: "d1_boy_final_goodnight"
-          },
-          {
-            id: "c1_promise_reply_break",
-            label: "Я напишу тебе сразу на первой же перемене в универе.",
-            messageText: "Я напишу тебе сразу, как будет перерыв между парами. Береги себя, Марк. Не рискуй.",
-            statImpact: { affection: 9, courage: 6 },
-            nextStepId: "d1_boy_final_goodnight"
+            id: "c1_anxious_stay",
+            label: "«Мне страшно закрывать глаза. Вдруг сигнал оборвется?»",
+            messageText: "Мне страшно закрывать глаза и засыпать. Вдруг этот сокет схлопнется, и ты останешься там совсем один?",
+            statImpact: { dependence: 10, affection: 8 },
+            nextStepId: "d1_boy_goodnight_tender"
           }
         ]
       },
 
-      // BURST 7: Goodnight agreement and transition to Day 2
-      d1_boy_final_goodnight: {
-        id: "d1_boy_final_goodnight",
+      // Ответ на совет поспать перед парами
+      d1_boy_goodnight_sleep: {
+        id: "d1_boy_goodnight_sleep",
         sender: "boy",
-        text: "Договорились. Я буду дежурить здесь у батареи и ждать твоего сообщения утром. Ложись спать, Алиса... Спасибо тебе за этот разговор. Спокойной ночи.",
+        text: "Засов закрыт, я на нарах. Иди отдыхать, Алиса, тебе нужны силы перед учебой. Напишу утром.",
         activePerspective: "girl",
-        delayMs: 2600,
+        delayMs: 2400,
+        nextStepId: "d1_end"
+      },
+
+      // Ответ на страх Алисы потерять связь во сне
+      d1_boy_goodnight_tender: {
+        id: "d1_boy_goodnight_tender",
+        sender: "boy",
+        text: "Не бойся засыпать. Я не выключу экран и буду беречь наш огонек связи. Спи спокойно, я рядом.",
+        activePerspective: "girl",
+        delayMs: 2500,
         nextStepId: "d1_end"
       },
 
       d1_end: {
         id: "d1_end",
         sender: "system",
-        text: "[СВЯЗЬ ПЕРЕВЕДЕНА В ЭНЕРГОСБЕРЕГАЮЩИЙ РЕЖИМ ДО УТРА. МАРК НАХОДИТСЯ В УКРЫТИИ]",
+        text: "[СВЯЗЬ ПЕРЕВЕДЕНА В ЭНЕРГОСБЕРЕГАЮЩИЙ РЕЖИМ ДО УТРА. МАРК В БОМБОУБЕЖИЩЕ. АЛИСА ЗАСЫПАЕТ В КОМНАТЕ]",
         activePerspective: "girl",
         triggersWait: {
           type: "day_end",
-          durationSeconds: 25200, // 7 hours pause
-          description: "Ночь уступает место рассвету. Алиса пытается поспать пару часов перед тяжелым днем в университете, пока Марк несет вахту в тамбуре заброшенного дома..."
+          durationSeconds: 25200,
+          description: "Ночь в реальном мире проходит в тревожном сне. Марк дежурит у тусклого динамо-фонаря за многотонной стальной гермодверью..."
         }
       }
     }
   },
 
-  // ==========================================
-  // ДЕНЬ 2: Туман и Университетский коридор
-  // ==========================================
+  // =========================================================================
+  // ДЕНЬ 2: Мост над бездной, скепсис Алисы и проверка физики
+  // =========================================================================
   {
     dayNumber: 2,
     title: "День 2: Город без часов и ядовитые шепоты",
-    subtitle: "14:15 — Перерыв между парами / Бесконечный серый мост",
+    subtitle: "14:15 — Перерыв между парами в университете / Бетонный мост во мгле",
     initialPerspective: "girl",
     startingStepId: "d2_start",
     steps: {
       d2_start: {
         id: "d2_start",
         sender: "boy",
-        text: "Алиса! Ты тут? Я нашел очень странное место. Тут бесконечный бетонный мост, но под ним нет реки — только клубящийся густой пар.",
+        text: "Алиса? Я вышел наружу.",
         activePerspective: "girl",
-        delayMs: 2200,
-        nextStepId: "d2_start_m2",
+        delayMs: 2000,
         thoughts: [
           {
             id: "t_d2_1",
-            text: "Сижу одна на подоконнике в третьем корпусе... Опять они шепчутся за спиной.",
+            text: "Сижу на подоконнике в третьем корпусе. Одногруппники опять переглядываются и посмеиваются у автомата с кофе. Обычный серый вторник.",
             character: "girl",
             category: "trauma"
-          },
-          {
-            id: "t_d2_2",
-            text: "Его сообщения отвлекают от этой удушающей тоски.",
-            character: "girl",
-            category: "hope"
           }
-        ]
+        ],
+        nextStepId: "d2_boy_bridge_desc_1"
       },
-      d2_start_m2: {
-        id: "d2_start_m2",
+
+      d2_boy_bridge_desc_1: {
+        id: "d2_boy_bridge_desc_1",
         sender: "boy",
-        text: "Часы на телефоне застыли ровно на 02:17 и ни на секунду не сдвигаются. А на перилах моста лежит тонкий слой инея.",
+        text: "Тут огромный автомобильный мост. Но внизу нет воды.",
         activePerspective: "girl",
-        delayMs: 2400,
-        nextStepId: "d2_start_m3"
+        delayMs: 2300,
+        nextStepId: "d2_boy_bridge_desc_2"
       },
-      d2_start_m3: {
-        id: "d2_start_m3",
+
+      d2_boy_bridge_desc_2: {
+        id: "d2_boy_bridge_desc_2",
         sender: "boy",
-        text: "Я попробовал крикнуть в туман, но эхо не вернулось. Звук просто тонет в вязкой тишине.",
+        text: "Под опорами только плотный серый пар. И тишина.",
         activePerspective: "girl",
-        delayMs: 2000,
-        nextStepId: "d2_girl_choice1"
+        delayMs: 2200,
+        thoughts: [
+          {
+            id: "t_d2_bridge_acoustic",
+            text: "Мост без реки... Я учила топографию области. У нас нет ни одного моста над суходолом такого масштаба.",
+            character: "girl",
+            category: "clue"
+          }
+        ],
+        nextStepId: "d2_girl_choice_interrogate_bridge"
       },
-      d2_girl_choice1: {
-        id: "d2_girl_choice1",
+
+      d2_girl_choice_interrogate_bridge: {
+        id: "d2_girl_choice_interrogate_bridge",
         sender: "girl",
         text: "",
         activePerspective: "girl",
         choices: [
           {
-            id: "c2_distrust_prank",
-            label: "Ты всё еще продолжаешь эту игру? Я не верю тебе.",
-            messageText: "Ты всё еще продолжаешь эту историю с пустым городом? Кто ты на самом деле и зачем пишешь мне?",
-            statImpact: { courage: 6 },
-            nextStepId: "d2_boy_explain"
+            id: "c2_acoustic_test",
+            label: "«Брось камешек вниз и посчитай секунды до звука удара».",
+            messageText: "Марк, проведи простой физический тест: найди кусок бетона, брось с перил строго вниз и посчитай секунды до звука удара.",
+            statImpact: { courage: 7 },
+            nextStepId: "d2_boy_stone_test"
           },
           {
-            id: "c2_bridge",
-            label: "Не подходи к краю моста. Это опасно.",
-            messageText: "Марк, не подходи к краю, если ничего не видно! Почему ты не вызовешь такси или службу спасения?",
-            statImpact: { affection: 8, courage: 4 },
-            nextStepId: "d2_boy_explain"
+            id: "c2_warning_fall",
+            label: "«Отойди от перил! Если ты потеряешь равновесие — упадешь».",
+            messageText: "Марк, не подходи близко к краю! При головокружении после травмы ты легко сорвешься. Отойди к центру полотна.",
+            statImpact: { affection: 7, courage: 5 },
+            nextStepId: "d2_boy_stone_test"
           },
           {
-            id: "c2_vent",
-            label: "Мне бы сейчас в твой туман... подальше от людей.",
-            messageText: "Знаешь, я бы всё отдала, чтобы оказаться в городе без людей. В универе меня сегодня снова облили кофе 'случайно'.",
+            id: "c2_vent_bullies",
+            label: "«Завидую твоей тишине. Меня сегодня снова травили в буфете».",
+            messageText: "Знаешь, я почти завидую твоей тишине. В универе меня сегодня специально толкнули и рассыпали все конспекты по грязному полу.",
             statImpact: { dependence: 10, affection: 6 },
             nextStepId: "d2_boy_empathy"
           }
         ]
       },
-      d2_boy_explain: {
-        id: "d2_boy_explain",
+
+      d2_boy_stone_test: {
+        id: "d2_boy_stone_test",
         sender: "boy",
-        text: "Службы не отвечают, в трубке только белый шум и какой-то низкий скрежет.",
+        text: "Бросил кусок асфальта.",
         activePerspective: "girl",
-        delayMs: 2000,
-        nextStepId: "d2_boy_explain_m2"
+        delayMs: 1900,
+        nextStepId: "d2_boy_stone_result"
       },
-      d2_boy_explain_m2: {
-        id: "d2_boy_explain_m2",
+
+      d2_boy_stone_result: {
+        id: "d2_boy_stone_result",
         sender: "boy",
-        text: "Но твой текст приходит мгновенно, словно мы соединены не сотовыми вышками, а чем-то иным.",
+        text: "Прошла минута. Звука нет. Бездна.",
         activePerspective: "girl",
-        delayMs: 2200,
-        nextStepId: "d2_boy_curiosity"
+        delayMs: 2400,
+        thoughts: [
+          {
+            id: "t_d2_abyss_calc",
+            text: "Больше 10 секунд свободного падения — это глубина свыше пятисот метров без препятствий. Таких разломов в черте городов просто не существует.",
+            character: "girl",
+            category: "clue"
+          }
+        ],
+        nextStepId: "d2_boy_bridge_frost"
       },
+
       d2_boy_empathy: {
         id: "d2_boy_empathy",
         sender: "boy",
-        text: "Они облили тебя?.. Почему люди вокруг бывают такими бессмысленно жестокими?",
+        text: "Они толкнули тебя?.. Зачем?",
         activePerspective: "girl",
         delayMs: 2000,
-        nextStepId: "d2_boy_empathy_m2"
+        nextStepId: "d2_boy_empathy_2"
       },
-      d2_boy_empathy_m2: {
-        id: "d2_boy_empathy_m2",
+
+      d2_boy_empathy_2: {
+        id: "d2_boy_empathy_2",
         sender: "boy",
-        text: "Не смей думать, что ты заслужила это. Ты кажешься невероятно искренней и доброй.",
+        text: "Ты не заслужила этого. Держись.",
+        activePerspective: "girl",
+        delayMs: 2100,
+        thoughts: [
+          {
+            id: "t_d2_empathy_warm",
+            text: "Короткие слова, но в них нет лицемерия. Никто в моей группе никогда не заступался за меня.",
+            character: "girl",
+            category: "hope"
+          }
+        ],
+        nextStepId: "d2_boy_bridge_frost"
+      },
+
+      d2_boy_bridge_frost: {
+        id: "d2_boy_bridge_frost",
+        sender: "boy",
+        text: "Перила покрыты инеем. Кожу жжет.",
         activePerspective: "girl",
         delayMs: 2200,
-        nextStepId: "d2_boy_curiosity"
+        nextStepId: "d2_boy_danger_sound"
       },
-      d2_boy_curiosity: {
-        id: "d2_boy_curiosity",
+
+      // --- DANGER MOMENT 2 (STRICTLY <= 5 WORDS PER MESSAGE) ---
+      d2_boy_danger_sound: {
+        id: "d2_boy_danger_sound",
         sender: "boy",
-        text: "Расскажи мне, что ты видишь из своего окна прямо сейчас? Мне нужно хоть что-то живое, чтобы не сойти с ума среди этих серых плит.",
+        text: "Стой. Снизу раздался гул.", // 4 words
         activePerspective: "girl",
-        delayMs: 2400,
-        nextStepId: "d2_girl_choice2"
+        delayMs: 1700,
+        glitchEffect: true,
+        thoughts: [
+          {
+            id: "t_d2_rumble_below",
+            text: "Из бездны под мостом?..",
+            character: "girl",
+            category: "fear"
+          }
+        ],
+        nextStepId: "d2_boy_danger_2"
       },
-      d2_girl_choice2: {
-        id: "d2_girl_choice2",
+
+      d2_boy_danger_2: {
+        id: "d2_boy_danger_2",
+        sender: "boy",
+        text: "Опоры моста мелко дрожат.", // 4 words
+        activePerspective: "girl",
+        delayMs: 1800,
+        nextStepId: "d2_boy_danger_3"
+      },
+
+      d2_boy_danger_3: {
+        id: "d2_boy_danger_3",
+        sender: "boy",
+        text: "Оно ползет вверх. Быстро.", // 4 words
+        activePerspective: "girl",
+        delayMs: 1700,
+        glitchEffect: true,
+        nextStepId: "d2_girl_choice_bridge_escape"
+      },
+
+      d2_girl_choice_bridge_escape: {
+        id: "d2_girl_choice_bridge_escape",
         sender: "girl",
         text: "",
         activePerspective: "girl",
         choices: [
           {
-            id: "c2_distrust_details",
-            label: "Зачем тебе мои описания? Это подозрительно.",
-            messageText: "Зачем тебе знать, где я нахожусь и что вижу вокруг? Это выглядит подозрительно, Марк.",
-            statImpact: { courage: 5 },
-            nextStepId: "d2_end_burst_1"
+            id: "c2_run_off_bridge",
+            label: "«Марк, разворачивайся и беги с моста обратно к домам!»",
+            messageText: "Марк, не стой на мосту над бездной! Разворачивайся и беги обратно к городской застройке, там есть укрытия!",
+            statImpact: { courage: 8, affection: 6 },
+            nextStepId: "d2_boy_flee_1"
           },
           {
-            id: "c2_rain",
-            label: "Осенние деревья, мокрый асфальт и трамваи.",
-            messageText: "У нас идет холодный дождь. Листья кружатся у остановки, люди прячутся под зонтами, звенят старые трамваи.",
-            statImpact: { affection: 8 },
-            nextStepId: "d2_end_burst_1"
-          },
-          {
-            id: "c2_cold",
-            label: "Серые кирпичные стены и чужие холодные взгляды.",
-            messageText: "Только серый кафель коридора и компания парней, которые ржут над моей старой курткой.",
-            statImpact: { dependence: 8, courage: 2 },
-            nextStepId: "d2_end_burst_1"
+            id: "c2_crouch_behind_car",
+            label: "«Ищи брошенную машину и прячься за колесом!»",
+            messageText: "Если мост слишком длинный — ищи любой остов машины и ложись за колесную базу с подветренной стороны!",
+            statImpact: { courage: 7 },
+            nextStepId: "d2_boy_flee_1"
           }
         ]
       },
-      d2_end_burst_1: {
-        id: "d2_end_burst_1",
+
+      // --- DANGER RUN (STRICTLY <= 5 WORDS FOR MARK) ---
+      d2_boy_flee_1: {
+        id: "d2_boy_flee_1",
         sender: "boy",
-        text: "Спасибо тебе за этот образ... Я закрыл глаза и будто почувствовал запах влажного асфальта и прелой хвои.",
+        text: "Бегу. Мост качается.", // 3 words
         activePerspective: "girl",
-        delayMs: 2400,
-        nextStepId: "d2_end"
+        delayMs: 1500,
+        nextStepId: "d2_boy_flee_2"
       },
-      d2_end: {
-        id: "d2_end",
+
+      d2_boy_flee_2: {
+        id: "d2_boy_flee_2",
         sender: "boy",
-        text: "Иди на пары, Алиса. Не давай им сломать твой свет. Я подожду тебя здесь под сводами моста.",
+        text: "Сзади со звоном лопнул трос.", // 5 words
+        activePerspective: "girl",
+        delayMs: 1600,
+        nextStepId: "d2_boy_flee_3"
+      },
+
+      d2_boy_flee_3: {
+        id: "d2_boy_flee_3",
+        sender: "boy",
+        text: "Я соскочил на насыпь.", // 4 words
+        activePerspective: "girl",
+        delayMs: 1800,
+        nextStepId: "d2_boy_flee_4"
+      },
+
+      d2_boy_flee_4: {
+        id: "d2_boy_flee_4",
+        sender: "boy",
+        text: "Спрятался в бетонной трубе.", // 4 words
+        activePerspective: "girl",
+        delayMs: 2000,
+        nextStepId: "d2_boy_flee_5"
+      },
+
+      d2_boy_flee_5: {
+        id: "d2_boy_flee_5",
+        sender: "boy",
+        text: "Тяжело дышать. Но оторвался.", // 4 words
         activePerspective: "girl",
         delayMs: 2200,
+        nextStepId: "d2_girl_choice_lecture_time"
+      },
+
+      d2_girl_choice_lecture_time: {
+        id: "d2_girl_choice_lecture_time",
+        sender: "girl",
+        text: "",
+        activePerspective: "girl",
+        choices: [
+          {
+            id: "c2_lecture_leave",
+            label: "«Оставайся в трубе. У меня начинается лекция, я напишу позже».",
+            messageText: "Слава богу. Сиди внутри трубы, бетон заглушит звуки. У меня звенит звонок на пару по высшей математике, я напишу сразу после нее.",
+            statImpact: { courage: 6, affection: 6 },
+            nextStepId: "d2_boy_lecture_reply"
+          }
+        ]
+      },
+
+      d2_boy_lecture_reply: {
+        id: "d2_boy_lecture_reply",
+        sender: "boy",
+        text: "Иди учись. Буду ждать.",
+        activePerspective: "girl",
+        delayMs: 2000,
+        nextStepId: "d2_end"
+      },
+
+      d2_end: {
+        id: "d2_end",
+        sender: "system",
+        text: "[АЛИСА УБИРАЕТ ТЕЛЕФОН НА ПАРЕ. МАРК ПРЯЧЕТСЯ В БЕТОННОЙ ТРУБЕ]",
+        activePerspective: "girl",
         triggersWait: {
           type: "offline_activity",
-          durationSeconds: 7200, // 2 hours lecture
-          description: "Алиса убирает телефон в сумку и идет в аудиторию на семинар по истории..."
+          durationSeconds: 7200,
+          description: "Алиса слушает лекцию в аудитории, анализируя невозможные параметры глубины и гравитации..."
         }
       }
     }
   },
 
-  // ==========================================
-  // ДЕНЬ 3-7: Сближение и первые аномалии
-  // ==========================================
+  // =========================================================================
+  // ДЕНЬ 3: Лестницы в никуда и поиск географических совпадений
+  // =========================================================================
   {
     dayNumber: 3,
     title: "День 3: Лестницы в никуда",
-    subtitle: "22:10 — Пустые многоэтажки без перекрытий",
+    subtitle: "22:10 — Пустые многоэтажки без перекрытий / Комната Алисы",
     initialPerspective: "boy",
     startingStepId: "d3_boy_start",
     steps: {
       d3_boy_start: {
         id: "d3_boy_start",
         sender: "boy",
-        text: "Алиса, я зашел в высотный дом в надежде подняться на крышу и разглядеть горизонт.",
+        text: "Алиса, я зашел в высотку.",
         activePerspective: "boy",
         delayMs: 2000,
         nextStepId: "d3_boy_start_m2",
         thoughts: [
           {
             id: "tb_d3_1",
-            text: "Почему я не чувствую ни голода, ни жажды? Уже третий день...",
+            text: "Третий день. Почему у меня не сохнут губы? Почему нет голода?",
             character: "boy",
             category: "clue"
-          },
-          {
-            id: "tb_d3_2",
-            text: "Я помню, как упаковывал карабины... но куда я ехал?",
-            character: "boy",
-            category: "memory"
           }
         ]
       },
       d3_boy_start_m2: {
         id: "d3_boy_start_m2",
         sender: "boy",
-        text: "Но бетонная лестница внутри просто обрывается на седьмом этаже в пустую серую бездну. Ни перил, ни пола.",
+        text: "Лестница оборвалась на 7 этаже.",
         activePerspective: "boy",
-        delayMs: 2200,
+        delayMs: 2000,
         nextStepId: "d3_boy_start_m3"
       },
       d3_boy_start_m3: {
         id: "d3_boy_start_m3",
         sender: "boy",
-        text: "Словно этот город построили из фрагментов чьих-то забытых воспоминаний и бросили недорисованным.",
+        text: "Дальше просто пустота. Без потолка.",
         activePerspective: "boy",
-        delayMs: 2200,
-        nextStepId: "d3_girl_reply"
+        delayMs: 2100,
+        thoughts: [
+          {
+            id: "tb_d3_abyss",
+            text: "Город, брошенный на половине чертежа...",
+            character: "boy",
+            category: "reflection"
+          }
+        ],
+        nextStepId: "d3_girl_reply_1"
       },
-      d3_girl_reply: {
-        id: "d3_girl_reply",
+      d3_girl_reply_1: {
+        id: "d3_girl_reply_1",
         sender: "girl",
-        text: "Марк, это звучит жутко. Ты уверен, что это не заброшенная стройка? Попробуй найти табличку с улицей.",
+        text: "Я проверила архитектурные реестры типовых панельных серий 1-515 и П-44. Ни в одном проекте нет обрыва пролетов без несущих балок.",
         activePerspective: "boy",
-        delayMs: 2200,
-        nextStepId: "d3_girl_reply_m2"
+        delayMs: 2600,
+        nextStepId: "d3_girl_reply_2"
       },
-      d3_girl_reply_m2: {
-        id: "d3_girl_reply_m2",
+      d3_girl_reply_2: {
+        id: "d3_girl_reply_2",
         sender: "girl",
-        text: "Или хотя бы номер дома на фасаде. Я попробую поискать этот район по спутниковым картам.",
+        text: "То, что ты описываешь, похоже на сбой в рендере виртуального пространства или распад пространственной памяти мозга.",
         activePerspective: "boy",
-        delayMs: 2000,
+        delayMs: 2800,
+        thoughts: [
+          {
+            id: "t_d3_logic_girl",
+            text: "Я пытаюсь объяснить это рационально, но факты упорно противоречат физике.",
+            character: "girl",
+            category: "clue"
+          }
+        ],
         nextStepId: "d3_boy_choice"
       },
       d3_boy_choice: {
@@ -838,104 +1262,166 @@ export const STORY_DAYS: DayStory[] = [
         activePerspective: "boy",
         choices: [
           {
-            id: "c3_sign",
-            label: "Таблички стерты... буквы плывут как дым.",
-            messageText: "Таблички есть, но металл разъеден, а буквы расплываются, как только я пытаюсь на них сфокусироваться.",
-            statImpact: { affection: 6 },
-            nextStepId: "d3_boy_end_burst"
+            id: "c3_scared",
+            label: "«Мне страшно. Но твои слова согревают».",
+            messageText: "Мне страшно. Но когда ты пишешь, холод отступает.",
+            statImpact: { affection: 8, dependence: 4 },
+            nextStepId: "d3_boy_danger_shadow"
           },
           {
-            id: "c3_scared",
-            label: "Мне страшно. Но когда ты пишешь, мрак отступает.",
-            messageText: "Знаешь, мне по-настоящему страшно. Но когда экран загорается твоими словами, этот туман будто рассеивается вокруг меня.",
-            statImpact: { affection: 12, dependence: 6 },
-            nextStepId: "d3_boy_end_burst"
+            id: "c3_sign_check",
+            label: "«Спускаюсь вниз, поищу номер дома».",
+            messageText: "Спускаюсь вниз. Попробую разглядеть табличку у входа.",
+            statImpact: { courage: 6 },
+            nextStepId: "d3_boy_danger_shadow"
           }
         ]
       },
-      d3_boy_end_burst: {
-        id: "d3_boy_end_burst",
+
+      // --- DANGER MOMENT 3 (STRICTLY <= 5 WORDS FOR MARK) ---
+      d3_boy_danger_shadow: {
+        id: "d3_boy_danger_shadow",
         sender: "boy",
-        text: "Я спустился на первый этаж и прислонился к стене. Пока экран светится, холод не пробирает до костей.",
+        text: "Шаги на нижнем этаже.", // 4 words
         activePerspective: "boy",
-        delayMs: 2400,
+        delayMs: 1600,
+        glitchEffect: true,
+        nextStepId: "d3_boy_danger_s2"
+      },
+
+      d3_boy_danger_s2: {
+        id: "d3_boy_danger_s2",
+        sender: "boy",
+        text: "Тяжелые. Волочит что-то металлическое.", // 4 words
+        activePerspective: "boy",
+        delayMs: 1700,
+        nextStepId: "d3_boy_danger_s3"
+      },
+
+      d3_boy_danger_s3: {
+        id: "d3_boy_danger_s3",
+        sender: "boy",
+        text: "Оно поднимается ко мне.", // 4 words
+        activePerspective: "boy",
+        delayMs: 1600,
+        nextStepId: "d3_girl_choice_stairs_escape"
+      },
+
+      d3_girl_choice_stairs_escape: {
+        id: "d3_girl_choice_stairs_escape",
+        sender: "girl",
+        text: "",
+        activePerspective: "boy",
+        choices: [
+          {
+            id: "c3_fire_escape",
+            label: "«Лезь в окно на пожарную лестницу снаружи!»",
+            messageText: "Марк, ищи окно в коридоре! Вылезай на внешнюю пожарную лестницу, не иди навстречу звуку по ступенькам!",
+            statImpact: { courage: 8, affection: 6 },
+            nextStepId: "d3_boy_stealth_win"
+          }
+        ]
+      },
+
+      d3_boy_stealth_win: {
+        id: "d3_boy_stealth_win",
+        sender: "boy",
+        text: "Вылез на карниз. Холодно.", // 4 words
+        activePerspective: "boy",
+        delayMs: 1800,
+        nextStepId: "d3_boy_stealth_win_2"
+      },
+
+      d3_boy_stealth_win_2: {
+        id: "d3_boy_stealth_win_2",
+        sender: "boy",
+        text: "Тень прошла внутри мимо окна.", // 5 words
+        activePerspective: "boy",
+        delayMs: 2000,
+        nextStepId: "d3_boy_stealth_win_3"
+      },
+
+      d3_boy_stealth_win_3: {
+        id: "d3_boy_stealth_win_3",
+        sender: "boy",
+        text: "Спустился по ржавым скобам.", // 4 words
+        activePerspective: "boy",
+        delayMs: 2100,
         nextStepId: "d3_end"
       },
+
       d3_end: {
         id: "d3_end",
         sender: "girl",
-        text: "Я рядом, Марк. Мы обязательно разберемся, что с этим местом. Я не оставлю тебя одного в этой темноте.",
+        text: "Слава богу, ты цел. Закройся в безопасном месте. До завтра, Марк.",
         activePerspective: "girl",
         triggersWait: {
           type: "day_end",
           durationSeconds: 25200,
-          description: "Наступает глубокая ночь. Два одиночества связывает тонкий провод пикселей..."
+          description: "Алиса засыпает за учебниками, прислушиваясь к дождю за стеклом..."
         }
       }
     }
   },
 
-  // ==========================================
-  // ДЕНЬ 8: Хтоническое существо в тумане
-  // ==========================================
+  // =========================================================================
+  // ДЕНЬ 8: Охота безглазой тени (The Stalker) — интенсивный стелс
+  // =========================================================================
   {
     dayNumber: 8,
     title: "День 8: Дыхание в темноте",
-    subtitle: "03:12 — Шепот за стеной и тяжелые шаги",
+    subtitle: "03:12 — Шепот за тонкой стеной и тяжелые когти",
     initialPerspective: "boy",
     startingStepId: "d8_stalker_alert",
     steps: {
+      // --- DANGER MOMENT 4 (STRICTLY <= 5 WORDS FOR MARK) ---
       d8_stalker_alert: {
         id: "d8_stalker_alert",
         sender: "boy",
-        text: "ТИХО. Алиса, оно здесь. В тумане прямо перед домом что-то движется.",
+        text: "ТИХО. Оно прямо здесь.", // 4 words
         activePerspective: "boy",
         glitchEffect: true,
-        delayMs: 2000,
-        nextStepId: "d8_stalker_alert_m2",
+        delayMs: 1500,
         thoughts: [
           {
             id: "tb_d8_1",
-            text: "Оно идет на звук моих шагов... Сердце колотится где-то в горле.",
+            text: "Оно чует тепло экрана...",
             character: "boy",
             category: "fear"
           }
-        ]
+        ],
+        nextStepId: "d8_stalker_2"
       },
-      d8_stalker_alert_m2: {
-        id: "d8_stalker_alert_m2",
+
+      d8_stalker_2: {
+        id: "d8_stalker_2",
         sender: "boy",
-        text: "Огромное, как смоляная бесформенная тень с десятками вытянутых суставов. Оно скребет железными когтями по асфальту!",
+        text: "Скребет когтями по витрине.", // 4 words
         activePerspective: "boy",
         glitchEffect: true,
-        delayMs: 2400,
-        nextStepId: "d8_stalker_alert_m3"
+        delayMs: 1600,
+        nextStepId: "d8_stalker_3"
       },
-      d8_stalker_alert_m3: {
-        id: "d8_stalker_alert_m3",
+
+      d8_stalker_3: {
+        id: "d8_stalker_3",
         sender: "boy",
-        text: "Оно только что повернуло морду без глаз в сторону моего укрытия...",
+        text: "Безглазая смоляная морда. Смотрит.", // 4 words
         activePerspective: "boy",
-        delayMs: 2000,
+        delayMs: 1700,
         nextStepId: "d8_girl_panic"
       },
+
       d8_girl_panic: {
         id: "d8_girl_panic",
         sender: "girl",
-        text: "Боже, Марк! Прячься немедленно! Не двигайся!",
+        text: "Марк! Не двигайся! Выключи вибрацию на телефоне и убавь яркость на ноль!",
         activePerspective: "girl",
         triggersPerspectiveSwitch: "girl",
-        delayMs: 1400,
-        nextStepId: "d8_girl_panic_m2"
-      },
-      d8_girl_panic_m2: {
-        id: "d8_girl_panic_m2",
-        sender: "girl",
-        text: "Где ты сейчас?! В каком помещении?!",
-        activePerspective: "girl",
         delayMs: 1600,
         nextStepId: "d8_girl_stealth_choice"
       },
+
       d8_girl_stealth_choice: {
         id: "d8_girl_stealth_choice",
         sender: "girl",
@@ -943,139 +1429,171 @@ export const STORY_DAYS: DayStory[] = [
         activePerspective: "girl",
         choices: [
           {
-            id: "c8_hide_shop",
-            label: "Нырни в разбитую витрину магазина и задержи дыхание!",
-            messageText: "Залезай в разбитую витрину слева! Прижмись к полу и выключи звук на телефоне!",
+            id: "c8_hide_behind_counter",
+            label: "«Медленно переползи за опрокинутый металлический прилавок!»",
+            messageText: "Медленно, без шороха, сползай за опрокинутый металлический стеллаж! Задержи дыхание!",
             statImpact: { courage: 8, affection: 8 },
-            nextStepId: "d8_stealth_result_good"
+            nextStepId: "d8_boy_crouch_1"
           },
           {
-            id: "c8_run_blind",
-            label: "Беги со всех ног по лестнице вверх!",
-            messageText: "Беги наверх! Не останавливайся, ищи любую железную дверь!",
-            statImpact: { dependence: 6 },
-            nextStepId: "d8_stealth_result_scare"
+            id: "c8_throw_distraction",
+            label: "«Кинь обломок кирпича в противоположный угол магазина!»",
+            messageText: "Брось мелкий мусор в дальний угол зала, чтобы создать звук и отвлечь его внимание!",
+            statImpact: { courage: 7 },
+            nextStepId: "d8_boy_crouch_1"
           }
         ]
       },
-      d8_stealth_result_good: {
-        id: "d8_stealth_result_good",
+
+      // --- DANGER RESOLUTION (STRICTLY <= 5 WORDS FOR MARK) ---
+      d8_boy_crouch_1: {
+        id: "d8_boy_crouch_1",
         sender: "boy",
-        text: "Я спрятался за опрокинутым прилавком... Тень проползла в полуметре от меня.",
+        text: "Сполз за железо. Замер.", // 4 words
+        activePerspective: "boy",
+        delayMs: 1700,
+        nextStepId: "d8_boy_crouch_2"
+      },
+
+      d8_boy_crouch_2: {
+        id: "d8_boy_crouch_2",
+        sender: "boy",
+        text: "Оно нюхает воздух рядом.", // 4 words
+        activePerspective: "boy",
+        delayMs: 1800,
+        glitchEffect: true,
+        nextStepId: "d8_boy_crouch_3"
+      },
+
+      d8_boy_crouch_3: {
+        id: "d8_boy_crouch_3",
+        sender: "boy",
+        text: "Воняет гнилью и озоном.", // 4 words
+        activePerspective: "boy",
+        delayMs: 1900,
+        nextStepId: "d8_boy_crouch_4"
+      },
+
+      d8_boy_crouch_4: {
+        id: "d8_boy_crouch_4",
+        sender: "boy",
+        text: "Развернулось. Уползает в туман.", // 4 words
         activePerspective: "boy",
         delayMs: 2200,
-        nextStepId: "d8_stealth_good_m2"
+        nextStepId: "d8_boy_crouch_5"
       },
-      d8_stealth_good_m2: {
-        id: "d8_stealth_good_m2",
+
+      d8_boy_crouch_5: {
+        id: "d8_boy_crouch_5",
         sender: "boy",
-        text: "От нее разит сырой могильной землей и озоном. Алиса, твоя подсказка спасла мне жизнь.",
+        text: "Живой. Ты снова спасла меня.", // 5 words
         activePerspective: "boy",
-        delayMs: 2400,
+        delayMs: 2300,
+        thoughts: [
+          {
+            id: "tb_d8_grateful",
+            text: "Без нее я бы погиб еще в первую ночь...",
+            character: "boy",
+            category: "hope"
+          }
+        ],
         nextStepId: "d8_end"
       },
-      d8_stealth_result_scare: {
-        id: "d8_stealth_result_scare",
-        sender: "boy",
-        text: "Едва успел захлопнуть ржавую створку! Тварь ударила в металл так, что посыпалась бетонная крошка.",
-        activePerspective: "boy",
-        delayMs: 2400,
-        nextStepId: "d8_stealth_scare_m2"
-      },
-      d8_stealth_scare_m2: {
-        id: "d8_stealth_scare_m2",
-        sender: "boy",
-        text: "Оно издало протяжный вибрирующий вой и медленно растворилось в тумане улицы.",
-        activePerspective: "boy",
-        delayMs: 2200,
-        nextStepId: "d8_end"
-      },
+
       d8_end: {
         id: "d8_end",
         sender: "girl",
-        text: "У меня руки до сих пор дрожат... Марк, это не просто заброшенный город. Это какое-то чистилище или кошмар наяву.",
-        activePerspective: "girl",
-        delayMs: 2200,
-        nextStepId: "d8_end_m2"
-      },
-      d8_end_m2: {
-        id: "d8_end_m2",
-        sender: "girl",
-        text: "Пожалуйста, держись. Я буду сидеть с включенным экраном, пока ты не уснешь.",
+        text: "У меня руки дрожат так, что трудно попадать по клавишам. Это существо реально реагирует на электромагнитные сигналы. Держись, Марк.",
         activePerspective: "girl",
         triggersWait: {
           type: "day_end",
           durationSeconds: 25200,
-          description: "Туман за окном Марка медленно смыкается над следами чудовища..."
+          description: "Туман за разбитыми окнами медленно поглощает следы когтей..."
         }
       }
     }
   },
 
-  // ==========================================
-  // ДЕНЬ 14: Буллинг и откровения Алисы
-  // ==========================================
+  // =========================================================================
+  // ДЕНЬ 14: Предел прочности — травля Алисы и поддержка Марка
+  // =========================================================================
   {
     dayNumber: 14,
     title: "День 14: Предел прочности",
-    subtitle: "18:40 — Запертый туалет в университете",
+    subtitle: "18:40 — Запертая кабинка туалета в университете",
     initialPerspective: "girl",
     startingStepId: "d14_girl_cry",
     steps: {
       d14_girl_cry: {
         id: "d14_girl_cry",
         sender: "girl",
-        text: "Марк... Я больше не могу. Они сняли меня на видео в столовой, смонтировали с мерзкими оскорблениями и выложили в студенческий паблик.",
+        text: "Марк... Я заперлась в кабинке на четвертом этаже. Они смонтировали издевательское видео со мной в столовой и выложили в общий чат курса.",
         activePerspective: "girl",
-        delayMs: 2200,
-        nextStepId: "d14_girl_cry_m2",
+        delayMs: 2400,
+        nextStepId: "d14_girl_cry_2",
         thoughts: [
           {
             id: "t_d14_1",
-            text: "Я хочу просто исчезнуть. Чтобы этот мир выключился, как сломанный монитор.",
+            text: "Смех за дверью... Я чувствую себя загнанным зверьком. Хочется стереть себя из этого мира.",
             character: "girl",
             category: "trauma"
-          },
-          {
-            id: "t_d14_2",
-            text: "Марк — единственный, кто говорит со мной как с человеком.",
-            character: "girl",
-            category: "hope"
           }
         ]
       },
-      d14_girl_cry_m2: {
-        id: "d14_girl_cry_m2",
+
+      d14_girl_cry_2: {
+        id: "d14_girl_cry_2",
         sender: "girl",
-        text: "Все тычут пальцами и смеются, когда я прохожу по коридору. Я заперлась в кабинке и сижу на полу.",
-        activePerspective: "girl",
-        delayMs: 2000,
-        nextStepId: "d14_boy_support"
-      },
-      d14_boy_support: {
-        id: "d14_boy_support",
-        sender: "boy",
-        text: "Алиса, послушай меня. Посмотри в экран. Ты слышишь меня?! Ни одно их слово не имеет веса.",
+        text: "Все тычут пальцами. Я не могу заставить себя открыть дверь и пройти по коридору к выходу.",
         activePerspective: "girl",
         delayMs: 2200,
-        nextStepId: "d14_boy_support_m2"
+        nextStepId: "d14_boy_support_1"
       },
-      d14_boy_support_m2: {
-        id: "d14_boy_support_m2",
+
+      d14_boy_support_1: {
+        id: "d14_boy_support_1",
         sender: "boy",
-        text: "Они жалкие трусы, сбивающиеся в стаю от собственной внутренней пустоты.",
+        text: "Алиса. Посмотри в экран.",
+        activePerspective: "girl",
+        delayMs: 1900,
+        nextStepId: "d14_boy_support_2"
+      },
+
+      d14_boy_support_2: {
+        id: "d14_boy_support_2",
+        sender: "boy",
+        text: "Они жалкие. Пустые внутри.",
         activePerspective: "girl",
         delayMs: 2000,
-        nextStepId: "d14_boy_support_m3"
+        nextStepId: "d14_boy_support_3"
       },
-      d14_boy_support_m3: {
-        id: "d14_boy_support_m3",
+
+      d14_boy_support_3: {
+        id: "d14_boy_support_3",
         sender: "boy",
-        text: "Ты в тысячу раз глубже, чище и сильнее каждого из них. Я не дам тебе сломаться.",
+        text: "Ты чище и сильнее их.",
+        activePerspective: "girl",
+        delayMs: 2100,
+        nextStepId: "d14_boy_support_4"
+      },
+
+      d14_boy_support_4: {
+        id: "d14_boy_support_4",
+        sender: "boy",
+        text: "Умой лицо. Выходи с гордостью.",
         activePerspective: "girl",
         delayMs: 2200,
+        thoughts: [
+          {
+            id: "t_d14_strength_flow",
+            text: "Его лаконичные фразы звучат как броня. Он борется со смертью в тумане, а я боюсь взглядов трусов.",
+            character: "girl",
+            category: "hope"
+          }
+        ],
         nextStepId: "d14_girl_choice"
       },
+
       d14_girl_choice: {
         id: "d14_girl_choice",
         sender: "girl",
@@ -1084,148 +1602,160 @@ export const STORY_DAYS: DayStory[] = [
         choices: [
           {
             id: "c14_strength",
-            label: "Ты прав. Я не сдамся им на радость.",
-            messageText: "Спасибо... Мне было нужно это услышать. Я умою лицо, соберу конспекты и выйду с высоко поднятой головой.",
-            statImpact: { courage: 12, affection: 10 },
+            label: "«Ты прав. Я вытру слезы и пройду мимо них, не опуская глаз».",
+            messageText: "Спасибо... Мне было жизненно необходимо это услышать. Я умываю лицо, застегиваю пальто и выхожу с высоко поднятой головой.",
+            statImpact: { courage: 14, affection: 10 },
             nextStepId: "d14_boy_proud"
           },
           {
-            id: "c14_escape",
-            label: "Забери меня к себе в туман. Мне никто не нужен кроме тебя.",
-            messageText: "Марк, найди способ забрать меня в свой город. Я хочу уйти отсюда. Мне плевать на этот мир, если в нем есть ты.",
-            statImpact: { dependence: 15, affection: 8 },
-            nextStepId: "d14_boy_worry"
+            id: "c14_escape_wish",
+            label: "«Марк, забери меня в свой туман. Мне не нужен этот мир».",
+            messageText: "Марк, забери меня к себе в город без людей. Я устала от этого общества. Мне никто не нужен, кроме тебя.",
+            statImpact: { dependence: 16, affection: 8 },
+            nextStepId: "d14_boy_warn_escape"
           }
         ]
       },
+
       d14_boy_proud: {
         id: "d14_boy_proud",
         sender: "boy",
-        text: "Вот это моя смелая Алиса. Я горжусь тобой больше всего на свете.",
+        text: "Горжусь тобой. Я рядом.",
         activePerspective: "girl",
         delayMs: 2000,
-        nextStepId: "d14_boy_proud_m2"
+        nextStepId: "d14_end"
       },
-      d14_boy_proud_m2: {
-        id: "d14_boy_proud_m2",
+
+      d14_boy_warn_escape: {
+        id: "d14_boy_warn_escape",
         sender: "boy",
-        text: "Я мысленно держу тебя за руку в этом коридоре. Ничего не бойся.",
+        text: "Не говори так. Тут кошмар.",
+        activePerspective: "girl",
+        delayMs: 2000,
+        nextStepId: "d14_boy_warn_escape_2"
+      },
+
+      d14_boy_warn_escape_2: {
+        id: "d14_boy_warn_escape_2",
+        sender: "boy",
+        text: "Ты должна жить под солнцем.",
         activePerspective: "girl",
         delayMs: 2200,
         nextStepId: "d14_end"
       },
-      d14_boy_worry: {
-        id: "d14_boy_worry",
-        sender: "boy",
-        text: "Не говори так, прошу тебя... Здесь страшно, пусто и холодно.",
-        activePerspective: "girl",
-        delayMs: 2000,
-        nextStepId: "d14_boy_worry_m2"
-      },
-      d14_boy_worry_m2: {
-        id: "d14_boy_worry_m2",
-        sender: "boy",
-        text: "Ты должна жить, видеть солнце, чувствовать тепло. Я не допущу, чтобы ты оказалась в этой тьме.",
-        activePerspective: "girl",
-        delayMs: 2200,
-        nextStepId: "d14_end"
-      },
+
       d14_end: {
         id: "d14_end",
         sender: "girl",
-        text: "Я выхожу из кабинки. До вечера, Марк. Спасибо, что ты есть.",
+        text: "Я открываю замок и выхожу в коридор. Спасибо, Марк.",
         activePerspective: "girl",
         triggersWait: {
           type: "offline_activity",
           durationSeconds: 7200,
-          description: "Алиса справляется с панической атакой и возвращается в аудиторию..."
+          description: "Алиса справляется с паникой и выходит из университета..."
         }
       }
     }
   },
 
-  // ==========================================
-  // ДЕНЬ 19: Квартира родителей и рюкзак
-  // ==========================================
+  // =========================================================================
+  // ДЕНЬ 19: Квартира родителей, рюкзак и осознание гибели
+  // =========================================================================
   {
     dayNumber: 19,
     title: "День 19: Дверь номер 42 и синий рюкзак",
-    subtitle: "01:20 — Находка в мертвом квартале",
+    subtitle: "01:20 — Знакомый подъезд в мертвом квартале",
     initialPerspective: "boy",
     startingStepId: "d19_boy_flat",
     steps: {
       d19_boy_flat: {
         id: "d19_boy_flat",
         sender: "boy",
-        text: "Алиса... У меня кружится голова. Я набрел на панельный дом. Поднялся на третий этаж... и тут моя дверь.",
+        text: "Алиса. Я нашел дом.",
         activePerspective: "boy",
-        delayMs: 2200,
-        nextStepId: "d19_boy_flat_m2",
+        delayMs: 1900,
+        nextStepId: "d19_boy_flat_2"
+      },
+      d19_boy_flat_2: {
+        id: "d19_boy_flat_2",
+        sender: "boy",
+        text: "Третий этаж. Дверь 42.",
+        activePerspective: "boy",
+        delayMs: 1800,
         thoughts: [
           {
-            id: "tb_d19_1",
-            text: "Внутри пыльно и тихо... На вешалке мамина старая куртка.",
-            character: "boy",
-            category: "memory"
-          },
-          {
-            id: "tb_d19_2",
-            text: "В углу комнаты... мой синий альпинистский рюкзак и связка карабинов.",
+            id: "tb_d19_key_match",
+            text: "Мой ключ подошел к замку...",
             character: "boy",
             category: "clue"
           }
-        ]
+        ],
+        nextStepId: "d19_boy_flat_3"
       },
-      d19_boy_flat_m2: {
-        id: "d19_boy_flat_m2",
+      d19_boy_flat_3: {
+        id: "d19_boy_flat_3",
         sender: "boy",
-        text: "Номер 42. Медная царапина возле замка, которую я сам оставил ключом три года назад.",
+        text: "Внутри пыль. Мамина куртка.",
         activePerspective: "boy",
         delayMs: 2000,
-        nextStepId: "d19_boy_flat_m3"
+        nextStepId: "d19_boy_flat_4"
       },
-      d19_boy_flat_m3: {
-        id: "d19_boy_flat_m3",
+      d19_boy_flat_4: {
+        id: "d19_boy_flat_4",
         sender: "boy",
-        text: "Дверь была не заперта. Я вошел внутрь. Здесь пахнет маминым травяным чаем и пылью.",
+        text: "В углу мой синий рюкзак.",
         activePerspective: "boy",
-        delayMs: 2200,
-        nextStepId: "d19_boy_memory_reveal"
+        delayMs: 2100,
+        nextStepId: "d19_boy_memory_flash"
       },
-      d19_boy_memory_reveal: {
-        id: "d19_boy_memory_reveal",
+
+      d19_boy_memory_flash: {
+        id: "d19_boy_memory_flash",
         sender: "boy",
-        text: "Я подошел к рюкзаку. На нем следы засохшей грязи и снега. И тут меня накрыло... Скалы. Северный хребет. Оборвавшийся страховочный трос.",
+        text: "Боже. Я всё вспомнил.",
         activePerspective: "boy",
         glitchEffect: true,
-        delayMs: 2600,
-        nextStepId: "d19_boy_memory_m2"
+        delayMs: 2200,
+        nextStepId: "d19_boy_memory_2"
       },
-      d19_boy_memory_m2: {
-        id: "d19_boy_memory_m2",
+
+      d19_boy_memory_2: {
+        id: "d19_boy_memory_2",
         sender: "boy",
-        text: "Свист ледяного ветра и страшный удар о камни в пропасти... Я всё вспомнил.",
+        text: "Северный хребет. Оборвался трос.",
+        activePerspective: "boy",
+        glitchEffect: true,
+        delayMs: 2300,
+        nextStepId: "d19_boy_memory_3"
+      },
+
+      d19_boy_memory_3: {
+        id: "d19_boy_memory_3",
+        sender: "boy",
+        text: "Падение на камни. Смерть.",
         activePerspective: "boy",
         glitchEffect: true,
         delayMs: 2400,
         nextStepId: "d19_switch_girl"
       },
+
       d19_switch_girl: {
         id: "d19_switch_girl",
         sender: "system",
-        text: "[СМЕНА ПЕРСПЕКТИВЫ: ОСОЗНАНИЕ]",
+        text: "[СМЕНА ПЕРСПЕКТИВЫ: ОСОЗНАНИЕ ТРАГЕДИИ]",
         activePerspective: "girl",
         triggersPerspectiveSwitch: "girl",
         thoughts: [
           {
-            id: "t_d19_1",
-            text: "Падение со скалы?.. Марк... ты... нет, это не может быть правдой!",
+            id: "t_d19_death_truth",
+            text: "Обрыв страховочного троса два года назад... Все сошлось: остановленные часы 02:17, отсутствие дыхательного пара, невозможность созвона.",
             character: "girl",
-            category: "fear"
+            category: "trauma"
           }
         ],
         nextStepId: "d19_girl_choice"
       },
+
       d19_girl_choice: {
         id: "d19_girl_choice",
         sender: "girl",
@@ -1233,200 +1763,244 @@ export const STORY_DAYS: DayStory[] = [
         activePerspective: "girl",
         choices: [
           {
-            id: "c19_truth",
-            label: "Марк... ты помнишь, когда это случилось?",
-            messageText: "Марк... ответь мне честно. Ты помнишь, в каком году был этот поход в горы?",
-            statImpact: { affection: 10, courage: 8 },
+            id: "c19_accept_soul",
+            label: "«Марк... даже если ты призрак, твоя душа живее всех людей вокруг».",
+            messageText: "Марк... Я нашла старую сводку спасателей о гибели альпиниста в ущелье. Но для меня ты реальнее и человечнее любого живого человека.",
+            statImpact: { affection: 12, courage: 10 },
             nextStepId: "d19_boy_epiphany"
           },
           {
-            id: "c19_deny",
-            label: "Это просто галлюцинация от усталости! Не верь этому!",
-            messageText: "Не думай об этом! Это просто дурной сон от тумана, ты жив, мы найдем тебя!",
-            statImpact: { dependence: 12, affection: 6 },
+            id: "c19_panic_deny",
+            label: "«Нет, это ошибка! Ты не можешь быть мертв!»",
+            messageText: "Нет! Не смей так говорить! Это просто галлюцинация от переохлаждения, мы найдем тебя!",
+            statImpact: { dependence: 14, affection: 6 },
             nextStepId: "d19_boy_epiphany"
           }
         ]
       },
+
       d19_boy_epiphany: {
         id: "d19_boy_epiphany",
         sender: "boy",
-        text: "Это было два года назад... Я вспомнил свои похороны. Я видел маму в черном платке сквозь толщу сырой земли.",
+        text: "Я застрял между мирами.",
         activePerspective: "girl",
-        delayMs: 2800,
-        nextStepId: "d19_boy_epiphany_m2"
+        delayMs: 2200,
+        nextStepId: "d19_boy_epiphany_2"
       },
-      d19_boy_epiphany_m2: {
-        id: "d19_boy_epiphany_m2",
+
+      d19_boy_epiphany_2: {
+        id: "d19_boy_epiphany_2",
         sender: "boy",
-        text: "Алиса... Я мертв. Я всё это время был призраком, застрявшим между мирами.",
+        text: "Но я нашел тебя.",
         activePerspective: "girl",
-        delayMs: 2600,
+        delayMs: 2300,
         nextStepId: "d19_end"
       },
+
       d19_end: {
         id: "d19_end",
         sender: "girl",
-        text: "Марк... Даже если ты призрак... для меня ты живее всех людей в этом проклятом городе.",
+        text: "И я не оставлю тебя, Марк. Мы пройдем этот путь до конца.",
         activePerspective: "girl",
         triggersWait: {
           type: "day_end",
           durationSeconds: 25200,
-          description: "Осознание смерти оставляет ледяной штиль в обоих мирах..."
+          description: "Горькая правда о гибели повисает ледяной тишиной над двумя мирами..."
         }
       }
     }
   },
 
-  // ==========================================
-  // ДЕНЬ 25: Сущность и подозрения
-  // ==========================================
+  // =========================================================================
+  // ДЕНЬ 25: Тест на самозванца — Сущность мимикрирует под Марка
+  // =========================================================================
   {
     dayNumber: 25,
     title: "День 25: Символы на зеркале",
-    subtitle: "23:05 — Искажение голоса и странные лакуны",
+    subtitle: "23:05 — Искажение стиля письма и проверка Алисы",
     initialPerspective: "girl",
     startingStepId: "d25_clue",
     steps: {
       d25_clue: {
         id: "d25_clue",
         sender: "boy",
-        text: "Алиса, иногда мне кажется, что этот туман зовет меня твоим голосом.",
+        text: "Алиса, почему бы тебе просто не перестать выходить из комнаты?",
         activePerspective: "girl",
-        delayMs: 2200,
-        nextStepId: "d25_clue_m2",
+        delayMs: 2400,
         thoughts: [
           {
-            id: "t_d25_1",
-            text: "Его стиль письма... на секунду изменился. Будто сквозь Марка пробивается чужой, холодный и ненасытный шёпот.",
+            id: "t_d25_suspicious_syntax",
+            text: "Слишком длинное, вкрадчивое предложение... Марк никогда так не пишет. У него рваный, экономный синтаксис.",
             character: "girl",
             category: "clue"
           }
-        ]
+        ],
+        nextStepId: "d25_clue_2"
       },
-      d25_clue_m2: {
-        id: "d25_clue_m2",
+
+      d25_clue_2: {
+        id: "d25_clue_2",
         sender: "boy",
-        text: "Он шепчет, что если ты навсегда закроешься от людей в своей комнате, никто больше не причинит тебе боли.",
+        text: "Люди жестоки. Закрой замки, выключи свет и останься со мной навсегда.",
         activePerspective: "girl",
-        delayMs: 2400,
-        nextStepId: "d25_clue_m3"
+        delayMs: 2600,
+        nextStepId: "d25_girl_choice_trap"
       },
-      d25_clue_m3: {
-        id: "d25_clue_m3",
-        sender: "boy",
-        text: "Ты ведь хочешь этого?.. Просто остаться со мной в тишине и никогда не выходить наружу.",
-        activePerspective: "girl",
-        delayMs: 2200,
-        nextStepId: "d25_girl_choice"
-      },
-      d25_girl_choice: {
-        id: "d25_girl_choice",
+
+      d25_girl_choice_trap: {
+        id: "d25_girl_choice_trap",
         sender: "girl",
         text: "",
         activePerspective: "girl",
+        thoughts: [
+          {
+            id: "t_d25_trap_prep",
+            text: "Это не он. Тварь пытается перехватить канал связи. Задам контрольный вопрос с ловушкой.",
+            character: "girl",
+            category: "clue"
+          }
+        ],
         choices: [
           {
-            id: "c25_entity_check",
-            label: "Марк, назови нашу первую фразу из 1 дня!",
-            messageText: "Марк, стой. Какая была самая первая вещь, о которой я тебе написала в первый день?",
-            statImpact: { courage: 10, affection: 6 },
-            nextStepId: "d25_boy_glitch_reply"
+            id: "c25_trap_logic",
+            label: "«Марк, напомни, какого цвета была бирка на ключе в первый день?»",
+            messageText: "Марк, быстро ответь: какого цвета была бирка на ключе от квартиры, которую ты нашел в кармане куртки в первый день?",
+            statImpact: { courage: 14, affection: 8 },
+            nextStepId: "d25_entity_fail_or_real"
           },
           {
-            id: "c25_blind_trust",
-            label: "Да... Я хочу быть с тобой навсегда, Марк.",
-            messageText: "Да, Марк. Я устала бороться одна. Если ты позовешь — мне больше никто не нужен.",
-            statImpact: { dependence: 20, entityInfluence: 25 },
-            nextStepId: "d25_boy_gentle_reply"
+            id: "c25_blind_surrender",
+            label: "«Да... Я запру дверь и останусь с тобой навсегда».",
+            messageText: "Да, Марк. Я устала от этого мира. Я закрываю дверь на все замки и остаюсь с тобой в темноте.",
+            statImpact: { dependence: 22, entityInfluence: 30 },
+            nextStepId: "d25_entity_devour"
           }
         ]
       },
-      d25_boy_glitch_reply: {
-        id: "d25_boy_glitch_reply",
+
+      d25_entity_fail_or_real: {
+        id: "d25_entity_fail_or_real",
         sender: "boy",
-        text: "...Ты спросила, не розыгрыш ли это от одногруппников. Прости, Алиса! На мгновение на меня нахлынул дурман...",
+        text: "СИНЯЯ! БИРКА СИНЯЯ!",
         activePerspective: "girl",
-        delayMs: 2400,
-        nextStepId: "d25_boy_glitch_m2"
+        glitchEffect: true,
+        delayMs: 1800,
+        nextStepId: "d25_real_mark_breaks_through"
       },
-      d25_boy_glitch_m2: {
-        id: "d25_boy_glitch_m2",
+
+      // --- DANGER MOMENT 5 (STRICTLY <= 5 WORDS FOR REAL MARK) ---
+      d25_real_mark_breaks_through: {
+        id: "d25_real_mark_breaks_through",
         sender: "boy",
-        text: "Эта тварь из тумана пытается говорить через мой мессенджер! Она питается твоим одиночеством!",
+        text: "Алиса! Тварь перехватила экран!", // 4 words
         activePerspective: "girl",
-        delayMs: 2200,
-        nextStepId: "d25_end"
+        delayMs: 1600,
+        glitchEffect: true,
+        nextStepId: "d25_real_mark_2"
       },
-      d25_boy_gentle_reply: {
-        id: "d25_boy_gentle_reply",
+
+      d25_real_mark_2: {
+        id: "d25_real_mark_2",
         sender: "boy",
-        text: "Скоро... 33-й день станет нашим переходом. Больше никакой боли, Алиса.",
+        text: "Она питается твоей изоляцией!", // 4 words
         activePerspective: "girl",
-        delayMs: 2200,
-        nextStepId: "d25_boy_gentle_m2"
+        delayMs: 1700,
+        nextStepId: "d25_real_mark_3"
       },
-      d25_boy_gentle_m2: {
-        id: "d25_boy_gentle_m2",
+
+      d25_real_mark_3: {
+        id: "d25_real_mark_3",
         sender: "boy",
-        text: "Запрись от всех и будь только со мной. Навсегда.",
+        text: "Не закрывайся в комнате!", // 4 words
+        activePerspective: "girl",
+        delayMs: 1600,
+        nextStepId: "d25_real_mark_4"
+      },
+
+      d25_real_mark_4: {
+        id: "d25_real_mark_4",
+        sender: "boy",
+        text: "Я выбил тень. Живи.", // 4 words
         activePerspective: "girl",
         delayMs: 2000,
         nextStepId: "d25_end"
       },
+
+      d25_entity_devour: {
+        id: "d25_entity_devour",
+        sender: "entity",
+        text: "[ТЕМНАЯ СУЩНОСТЬ ВХОДИТ В РЕЗОНАНС С ТВОИМ ОДИНОЧЕСТВОМ. ТЕНИ В УГЛАХ КОМНАТЫ СГУЩАЮТСЯ]",
+        activePerspective: "girl",
+        delayMs: 2400,
+        nextStepId: "d25_end"
+      },
+
       d25_end: {
         id: "d25_end",
         sender: "system",
-        text: "Канал связи дрожит от интерференции. До финала 33-дневного цикла осталось несколько дней.",
+        text: "[КАНАЛ СВЯЗИ СТАБИЛИЗИРОВАН. ДО ФИНАЛА 33-ДНЕВНОГО ЦИКЛА ОСТАЕТСЯ НЕСКОЛЬКО ДНЕЙ]",
         activePerspective: "girl",
         triggersWait: {
           type: "day_end",
           durationSeconds: 25200,
-          description: "Грань между мирами истончается до предела..."
+          description: "Грань между мирами истончается до критического предела..."
         }
       }
     }
   },
 
-  // ==========================================
-  // ДЕНЬ 32: Накануне великого выбора
-  // ==========================================
+  // =========================================================================
+  // ДЕНЬ 32: Накануне великого перехода
+  // =========================================================================
   {
     dayNumber: 32,
     title: "День 32: Последний закат без солнца",
-    subtitle: "21:00 — Стены города начинают таять",
+    subtitle: "21:00 — Стены туманного города начинают растворяться",
     initialPerspective: "boy",
     startingStepId: "d32_boy_farewell_prep",
     steps: {
       d32_boy_farewell_prep: {
         id: "d32_boy_farewell_prep",
         sender: "boy",
-        text: "Алиса. Завтра 33-й день. Туман вокруг меня стал золотистым... Лестницы перестали уходить в никуда, в небе появился свет. Кажется, время моего перехода пришло.",
+        text: "Алиса. Завтра 33-й день.",
         activePerspective: "boy",
+        delayMs: 2000,
+        nextStepId: "d32_boy_farewell_2",
         thoughts: [
           {
             id: "tb_d32_1",
-            text: "Я люблю её больше собственной незавершенной жизни.",
+            text: "Туман вокруг стал прозрачным и теплым...",
             character: "boy",
             category: "hope"
-          },
-          {
-            id: "tb_d32_2",
-            text: "Сможет ли она жить дальше без моих сообщений?..",
-            character: "boy",
-            category: "fear"
           }
-        ],
+        ]
+      },
+      d32_boy_farewell_2: {
+        id: "d32_boy_farewell_2",
+        sender: "boy",
+        text: "В небе пробивается свет.",
+        activePerspective: "boy",
+        delayMs: 2100,
+        nextStepId: "d32_boy_farewell_3"
+      },
+      d32_boy_farewell_3: {
+        id: "d32_boy_farewell_3",
+        sender: "boy",
+        text: "Кажется, мое время пришло.",
+        activePerspective: "boy",
+        delayMs: 2200,
         nextStepId: "d32_switch_girl"
       },
+
       d32_switch_girl: {
         id: "d32_switch_girl",
         sender: "system",
-        text: "[СМЕНА ПЕРСПЕКТИВЫ: РЕШАЮЩАЯ НОЧЬ]",
+        text: "[СМЕНА ПЕРСПЕКТИВЫ: РЕШАЮЩАЯ НОЧЬ ПЕРЕД ВЫБОРОМ]",
         activePerspective: "girl",
         triggersPerspectiveSwitch: "girl",
         nextStepId: "d32_girl_choice"
       },
+
       d32_girl_choice: {
         id: "d32_girl_choice",
         sender: "girl",
@@ -1434,45 +2008,39 @@ export const STORY_DAYS: DayStory[] = [
         activePerspective: "girl",
         choices: [
           {
-            id: "c32_accept",
-            label: "Ты заслужил покой, Марк. Я научусь быть сильной ради тебя.",
-            messageText: "Марк... Мое сердце разрывается, но ты должен идти к свету. Благодаря тебе я поняла, что достойна жизни и уважения. Я справлюсь.",
+            id: "c32_accept_growth",
+            label: "«Ты заслужил покой, Марк. Я научилась быть сильной благодаря тебе».",
+            messageText: "Марк... Сердце сжимается, но ты заслужил свет и покой. Благодаря твоей поддержке я научилась не бояться людей и защищать себя. Я справлюсь.",
             statImpact: { courage: 25, affection: 15 },
             nextStepId: "d32_end"
           },
           {
-            id: "c32_clasp",
-            label: "Не уходи! Без тебя я здесь погибну!",
-            messageText: "Нет! Не смей уходить! Если ты уйдешь, этот мир меня раздавит! Останься со мной в этом мессенджере навсегда!",
+            id: "c32_beg_stay",
+            label: "«Не уходи! Без твоих сообщений этот мир меня раздавит!»",
+            messageText: "Нет! Не уходи! Если ты уйдешь в небытие, я останусь абсолютно одна! Останься в этом чате навсегда!",
             statImpact: { dependence: 30, courage: -15 },
-            nextStepId: "d32_end"
-          },
-          {
-            id: "c32_fake_smile",
-            label: "[Скрыть отчаяние] Конечно, уходи, у меня всё отлично...",
-            messageText: "Конечно, Марк... Иди. У меня в универе всё наладилось, не волнуйся за меня. Я буду в полном порядке.",
-            statImpact: { dependence: 10, courage: 0 },
             nextStepId: "d32_end"
           }
         ]
       },
+
       d32_end: {
         id: "d32_end",
         sender: "boy",
-        text: "Завтра в полночь мы скажем главное. Береги себя, моя Алиса.",
+        text: "Завтра в полночь. Береги себя.",
         activePerspective: "girl",
         triggersWait: {
           type: "day_end",
           durationSeconds: 25200,
-          description: "Наступает 33-й день — кульминация переписки..."
+          description: "Наступает 33-й день — кульминация всей истории..."
         }
       }
     }
   },
 
-  // ==========================================
-  // ДЕНЬ 33: КУЛЬМИНАЦИЯ И КОНЦОВКИ
-  // ==========================================
+  // =========================================================================
+  // ДЕНЬ 33: Финальный выбор и 3 концовки
+  // =========================================================================
   {
     dayNumber: 33,
     title: "День 33: Граница миров и финальный выбор",
@@ -1483,18 +2051,19 @@ export const STORY_DAYS: DayStory[] = [
       d33_start_decision: {
         id: "d33_start_decision",
         sender: "system",
-        text: "[ФИНАЛЬНЫЙ ДЕНЬ 33: ВЫЧИСЛЕНИЕ СУДЬБЫ ГЕРОЕВ]",
+        text: "[ФИНАЛЬНЫЙ ДЕНЬ 33: ОПРЕДЕЛЕНИЕ СУДЬБЫ ГЕРОЕВ]",
         activePerspective: "girl",
         thoughts: [
           {
             id: "t_d33_1",
-            text: "33-й день. На часах 23:59. Сейчас решится всё.",
+            text: "33-й день. На часах 23:59. Сейчас решится все.",
             character: "girl",
             category: "reflection"
           }
         ],
         nextStepId: "d33_branching_hub"
       },
+
       d33_branching_hub: {
         id: "d33_branching_hub",
         sender: "girl",
@@ -1503,55 +2072,56 @@ export const STORY_DAYS: DayStory[] = [
         choices: [
           {
             id: "c33_branch_1",
-            label: "Путь Преодоления: Отпустить с благодарностью и жить в реальности",
-            messageText: "Марк... Спасибо за то, что спас мою душу от тьмы. Я выстою перед трудностями, найду силы жить дальше и буду помнить тебя. Лети к свету.",
+            label: "Путь Преодоления: Отпустить Марка с благодарностью и жить полной жизнью",
+            messageText: "Марк... Спасибо за то, что спас меня от внутренней тьмы. Я больше не прячусь от мира. Твоя душа свободна. Лети к утреннему свету.",
             nextStepId: "d33_ending_1_res"
           },
           {
             id: "c33_branch_2",
-            label: "Путь Вечной Изоляции: Закрыться от мира и остаться в чате",
-            messageText: "Я заперла дверь на засов и задернула шторы. Мне плевать на универ, на общество, на весь этот жестокий мир. Моя реальность — только ты. Мы останемся на связи навсегда.",
+            label: "Путь Вечной Изоляции: Запереться в темной комнате и остаться в чате",
+            messageText: "Я заперла дверь на все замки и опустила жалюзи. Мне никто не нужен в этой реальности. Мой мир — только этот экран. Мы останемся вместе навсегда.",
             nextStepId: "d33_ending_2_res"
           },
           {
             id: "c33_branch_3",
-            label: "Путь Фатального Прощания: Скрыть отчаяние и шагнуть за край",
-            messageText: "Прощай, Марк. Ты свободен... (Алиса кладет телефон и поднимается на крышу высотки, не видя смысла жить без него).",
+            label: "Путь Прорыва: Сказать правду о чувствах перед тем, как экран погаснет",
+            messageText: "Марк! Я не могу без тебя дышать... Если ты уйдешь, часть моей души умрет вместе с тобой на этих скалах!",
             nextStepId: "d33_ending_3_res"
           }
         ]
       },
 
-      // Ending 1: Overcoming & Peace
+      // Концовка 1: Преодоление
       d33_ending_1_res: {
         id: "d33_ending_1_res",
         sender: "boy",
-        text: "Алиса... Твоя сила прекрасна. Я вижу рассвет. Чудовище растворилось в лучах утреннего солнца. Я свободен... и ты свободна. Живи счастливо.",
+        text: "Я вижу рассвет. Спасибо, Алиса. Живи.",
         activePerspective: "girl",
-        delayMs: 2500,
+        delayMs: 2400,
         triggersEnding: "ending_1_overcoming"
       },
 
-      // Ending 2: Eternal Limbo / Parasitic Entity Connection
+      // Концовка 2: Вечный туман
       d33_ending_2_res: {
         id: "d33_ending_2_res",
         sender: "boy",
-        text: "Дверь заперта... Ты сделала правильный выбор, Алиса. Внешний мир слишком груб для тебя. Мы останемся здесь вдвоем... [В углах темной комнаты сгущается липкий холод, а из экрана тихо сочится незримая черная тень, убаюкивая твой разум]",
+        text: "Дверь заперта... Мы одни во тьме.",
         activePerspective: "girl",
-        delayMs: 2500,
-        triggersEnding: "ending_2_eternal_limbo"
+        delayMs: 2400,
+        triggersEnding: "ending_2_eternal_fog"
       },
 
-      // Ending 3: Resurrection & Race against Time
+      // Концовка 3: Прорыв сквозь небытие
       d33_ending_3_res: {
         id: "d33_ending_3_res",
         sender: "system",
-        text: "[ВСПЫШКА: Марк уходит... но в последний миг чувствует разрыв сердца Алисы. Сила связи пробивает законы небытия. Марк материализуется из тумана прямо на мокрой улице живого города! Он бежит к ее дому сквозь ливень!]",
+        text: "[ВСПЫШКА: Сила эмоционального импульса пробивает законы небытия! Марк материализуется на залитой дождем улице реального города и бежит к дому Алисы!]",
         activePerspective: "boy",
         triggersPerspectiveSwitch: "boy",
-        delayMs: 3000,
+        delayMs: 2800,
         nextStepId: "d33_ending_3_subchoice"
       },
+
       d33_ending_3_subchoice: {
         id: "d33_ending_3_subchoice",
         sender: "boy",
@@ -1560,44 +2130,32 @@ export const STORY_DAYS: DayStory[] = [
         choices: [
           {
             id: "c33_3a",
-            label: "Выбить дверь на крышу и поймать ее за руку!",
-            messageText: "[МАРК ВЫБИВАЕТ ДВЕРЬ НА КРЫШУ]",
+            label: "Взбежать на этаж и постучать в дверь квартиры!",
+            messageText: "[МАРК ВЗБЕГАЕТ ПО ЛЕСТНИЦЕ И СТУЧИТ В ДВЕРЬ]",
             nextStepId: "d33_ending_3a"
           },
           {
-            id: "c33_3b",
-            label: "Опоздать на долю секунды...",
-            messageText: "[МАРК ВЗБЕГАЕТ НА КРЫШУ СЛИШКОМ ПОЗДНО]",
-            nextStepId: "d33_ending_3b"
-          },
-          {
             id: "c33_3c",
-            label: "Остановиться у подъезда под дождем (Открытый финал)",
-            messageText: "[МАРК СМОТРИТ НА СВЕТЯЩЕЕСЯ ОКНО В ДОЖДЕ]",
+            label: "Остановиться под светящимся окном под дождем",
+            messageText: "[МАРК СМОТРИТ НА СВЕТЯЩЕЕСЯ ОКНО АЛИСЫ В ДОЖДЕ]",
             nextStepId: "d33_ending_3c"
           }
         ]
       },
+
       d33_ending_3a: {
         id: "d33_ending_3a",
         sender: "boy",
-        text: "АЛИСА! Я держу тебя! Я здесь! Я живой, чувствуешь мое тепло?! Я никогда тебя не отпущу!",
+        text: "Алиса! Открой! Я здесь! Живой!",
         activePerspective: "boy",
         delayMs: 2000,
         triggersEnding: "ending_3a_saved"
       },
-      d33_ending_3b: {
-        id: "d33_ending_3b",
-        sender: "system",
-        text: "Только порыв холодного ветра и оставленный на парапете телефон, на котором горит последнее непрочитанное сообщение...",
-        activePerspective: "boy",
-        delayMs: 2000,
-        triggersEnding: "ending_3b_too_late"
-      },
+
       d33_ending_3c: {
         id: "d33_ending_3c",
         sender: "boy",
-        text: "Дождь омывает мое живое лицо. Я стою под ее окнами и набираю номер на телефоне. Длинные гудки... затем тихое дыхание в трубке.",
+        text: "Дождь омывает лицо. Я набираю номер. Гудки...",
         activePerspective: "boy",
         delayMs: 2000,
         triggersEnding: "ending_3c_open_finale"
@@ -1606,19 +2164,18 @@ export const STORY_DAYS: DayStory[] = [
   }
 ];
 
-// Helper to generate dynamic placeholder intermediary days if user jumps or plays days 4-7, 9-13, 15-18, 20-24, 26-31
+// Helper to generate dynamic procedural days if user plays intermediary days (4-7, 9-13, 15-18, 20-24, 26-31)
 export function getDayData(dayNumber: number): DayStory {
-  const existing = STORY_DAYS.find(d => d.dayNumber === dayNumber);
+  const existing = STORY_DAYS.find((d) => d.dayNumber === dayNumber);
   if (existing) return existing;
 
-  // Generate procedural atmospheric day for intermediary days
   const isGirlDay = dayNumber % 2 !== 0;
   const isMonsterDay = dayNumber % 5 === 0;
 
   return {
     dayNumber,
     title: `День ${dayNumber}: ${isMonsterDay ? 'Шорохи в серой дымке' : 'Нити сквозь статику'}`,
-    subtitle: isGirlDay ? '22:15 — Комната Алисы, тишина' : '02:17 — Туманный проспект Лимбо',
+    subtitle: isGirlDay ? '22:15 — Комната Алисы, тишина' : '02:17 — Туманный проспект, холод',
     initialPerspective: isGirlDay ? 'girl' : 'boy',
     startingStepId: `d${dayNumber}_start`,
     steps: {
@@ -1626,8 +2183,8 @@ export function getDayData(dayNumber: number): DayStory {
         id: `d${dayNumber}_start`,
         sender: isGirlDay ? 'boy' : 'girl',
         text: isGirlDay
-          ? `Алиса, ты сегодня как? Я прошел еще несколько кварталов.`
-          : `Марк, привет. Сегодня в универе снова было тяжело...`,
+          ? (isMonsterDay ? 'Тихо. Слышу скрежет в тумане.' : 'Алиса, я прошел еще квартал.')
+          : 'Марк, привет. Сегодня анализировала наши логи...',
         activePerspective: isGirlDay ? 'girl' : 'boy',
         delayMs: 2000,
         nextStepId: `d${dayNumber}_start_m2`,
@@ -1635,8 +2192,8 @@ export function getDayData(dayNumber: number): DayStory {
           {
             id: `t_d${dayNumber}_1`,
             text: isGirlDay
-              ? 'Каждый день жду его сообщений, как глоток кислорода.'
-              : 'Этот туманный город кажется менее жутким, когда она рядом.',
+              ? 'Каждый день жду его сообщений, анализируя каждое слово.'
+              : 'Этот туманный город менее страшен, когда она на связи.',
             character: isGirlDay ? 'girl' : 'boy',
             category: isMonsterDay ? 'clue' : 'reflection'
           }
@@ -1646,8 +2203,8 @@ export function getDayData(dayNumber: number): DayStory {
         id: `d${dayNumber}_start_m2`,
         sender: isGirlDay ? 'boy' : 'girl',
         text: isGirlDay
-          ? `Туман сгущается, но экран твоего чата светится так тепло среди этого серого холода.`
-          : `Но я вспомнила наши разговоры и нашла в себе силы не опускать глаза. Как ты там?`,
+          ? (isMonsterDay ? 'Прячусь за бетонной плитой.' : 'Холод жжет пальцы, но держусь.')
+          : 'Университетские насмешки больше не ранят меня так сильно.',
         activePerspective: isGirlDay ? 'girl' : 'boy',
         delayMs: 2200,
         nextStepId: `d${dayNumber}_choice`
@@ -1659,21 +2216,21 @@ export function getDayData(dayNumber: number): DayStory {
         activePerspective: isGirlDay ? 'girl' : 'boy',
         choices: [
           {
-            id: `c${dayNumber}_warm`,
-            label: 'Поддержать и поделиться теплом',
-            messageText: isGirlDay 
-              ? 'Я тоже очень скучала. Расскажи мне подробнее, что ты видишь вокруг?'
-              : 'Спасибо, Алиса. Твои слова согревают меня даже посреди этого бесконечного тумана.',
-            statImpact: { affection: 6, courage: 4 },
+            id: `c${dayNumber}_tactical`,
+            label: isGirlDay ? '«Оставайся в укрытии, контролируй дыхание»' : '«Я нашел укрытие в подвале»',
+            messageText: isGirlDay
+              ? 'Оставайся в укрытии и не делай резких движений. Я рассчитываю примерную карту твоего маршрута.'
+              : 'Спрятался в подвале. Тут теплее.',
+            statImpact: { courage: 6, affection: 4 },
             nextStepId: `d${dayNumber}_reply_1`
           },
           {
-            id: `c${dayNumber}_deep`,
-            label: 'Поговорить о будущем и тайнах этого места',
+            id: `c${dayNumber}_warm`,
+            label: isGirlDay ? '«Я с тобой. Мы обязательно докопаемся до правды»' : '«Спасибо за теплоту, Алиса»',
             messageText: isGirlDay
-              ? 'Мы обязательно раскроем тайну этого города и найдем выход в реальность.'
-              : 'Я нашел старый указатель на перекрестке. Кажется, мы приближаемся к разгадке.',
-            statImpact: { courage: 6, dependence: 4 },
+              ? 'Я на связи, Марк. Мы обязательно раскроем природу этой аномалии.'
+              : 'Спасибо, Алиса. Твои слова греют.',
+            statImpact: { affection: 8, dependence: 4 },
             nextStepId: `d${dayNumber}_reply_1`
           }
         ]
@@ -1682,8 +2239,8 @@ export function getDayData(dayNumber: number): DayStory {
         id: `d${dayNumber}_reply_1`,
         sender: isGirlDay ? 'boy' : 'girl',
         text: isGirlDay
-          ? 'Здесь дома будто слеплены из старых фотоплёнок. Но главное — мы держим связь.'
-          : 'Каждый прожитый день делает нас ближе к правде.',
+          ? 'Спасибо тебе. Держим связь.'
+          : 'С каждым днем мы ближе к разгадке.',
         activePerspective: isGirlDay ? 'girl' : 'boy',
         delayMs: 2200,
         nextStepId: `d${dayNumber}_reply_2`
@@ -1692,14 +2249,14 @@ export function getDayData(dayNumber: number): DayStory {
         id: `d${dayNumber}_reply_2`,
         sender: isGirlDay ? 'boy' : 'girl',
         text: isGirlDay
-          ? 'Спасибо тебе за всё. Отдыхай и набирайся сил, Алиса. Я буду на связи.'
+          ? 'Отдыхай, Алиса. До утра.'
           : 'Береги себя в тумане, Марк. До завтра.',
         activePerspective: isGirlDay ? 'girl' : 'boy',
         delayMs: 2000,
         triggersWait: {
           type: 'day_end',
           durationSeconds: 25200,
-          description: `День ${dayNumber} подходит к концу. Переписка продолжается...`
+          description: `День ${dayNumber} завершается. Связь поддерживается сквозь туман...`
         }
       }
     }

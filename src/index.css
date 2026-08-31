@@ -45,6 +45,48 @@
   animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes softPulseGlow {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.25), 0 0 0 1px rgba(6, 182, 212, 0.4);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.55), 0 0 28px rgba(168, 85, 247, 0.3), 0 0 0 1px rgba(6, 182, 212, 0.85);
+  }
+}
+
+.animate-soft-pulse {
+  animation: softPulseGlow 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes gentleBounceIcon {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.animate-gentle-bounce {
+  animation: gentleBounceIcon 1.8s ease-in-out infinite;
+}
+
 /* Lifeline Signal & Scanlines Aesthetic */
 .lifeline-scanlines {
   background: linear-gradient(
@@ -91,4 +133,20 @@
 
 .lifeline-choice-glow:hover {
   box-shadow: 0 0 20px -2px rgba(168, 85, 247, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Voice recording animated waveform */
+@keyframes voiceWaveformAnim {
+  0% {
+    height: 25%;
+    opacity: 0.6;
+  }
+  50% {
+    height: 100%;
+    opacity: 1;
+  }
+  100% {
+    height: 40%;
+    opacity: 0.8;
+  }
 }

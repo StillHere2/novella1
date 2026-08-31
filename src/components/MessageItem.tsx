@@ -7,11 +7,13 @@ interface MessageItemProps {
   message: Message;
   activePerspective: Character;
   isNewest?: boolean;
+  isBoyNameKnown?: boolean;
 }
 
 export const MessageItem: React.FC<MessageItemProps> = ({
   message,
   activePerspective,
+  isBoyNameKnown = false,
 }) => {
   const isSenderActive = message.sender === activePerspective;
   const isSystem = message.sender === 'system';
@@ -46,7 +48,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   }
 
   const isOutgoing = isSenderActive;
-  const senderLabel = isBoy ? 'Марк' : 'Алиса';
+  const senderLabel = isBoy ? '....' : 'Алиса';
 
   return (
     <div

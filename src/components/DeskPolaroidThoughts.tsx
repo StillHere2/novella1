@@ -28,6 +28,7 @@ interface DeskPolaroidThoughtsProps {
   onSelectChoice?: (choice: ChoiceOption) => void;
   onSelectActionThought?: (thought: ThoughtBubble) => void;
   onThoughtRead?: (thought: ThoughtBubble) => void;
+  isBoyNameKnown?: boolean;
 }
 
 export const DeskPolaroidThoughts: React.FC<DeskPolaroidThoughtsProps> = ({
@@ -38,6 +39,7 @@ export const DeskPolaroidThoughts: React.FC<DeskPolaroidThoughtsProps> = ({
   onSelectChoice,
   onSelectActionThought,
   onThoughtRead,
+  isBoyNameKnown = false,
 }) => {
   const [activeTab, setActiveTab] = useState<'current' | 'all'>('current');
 
@@ -308,7 +310,11 @@ export const DeskPolaroidThoughts: React.FC<DeskPolaroidThoughtsProps> = ({
                     </p>
 
                     <div className="mt-2.5 flex items-center justify-between border-t border-white/5 pt-1.5 text-[9px] font-mono text-slate-400">
-                      <span>{thought.character === 'girl' ? 'Алиса' : 'Марк'}</span>
+                      <span>
+                        {thought.character === 'girl'
+                          ? 'Алиса'
+                          : '....'}
+                      </span>
                       {isAction ? (
                         <span className="text-amber-400 font-bold flex items-center gap-1 group-hover:underline">
                           Зажечь и отправить ➔

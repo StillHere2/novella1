@@ -12,11 +12,11 @@ export const DeskEvidenceBoard: React.FC<DeskEvidenceBoardProps> = ({ gameState 
   if (!isGirl) {
     return (
       <div className="hidden lg:flex flex-col gap-3 w-72 select-none opacity-40 pointer-events-none">
-        {/* Limbo Fog Echo for Boy */}
+        {/* Fog Realm Echo for Boy */}
         <div className="bg-[#0b0f19]/80 border border-cyan-900/30 p-3 rounded-lg backdrop-blur-sm">
           <div className="text-[11px] font-mono text-cyan-400/70 mb-1 flex items-center gap-1.5">
             <Compass className="w-3.5 h-3.5 animate-spin text-cyan-400" style={{ animationDuration: '12s' }} />
-            Лимбо: Пространственный сдвиг
+            Изнанка: Пространственный сдвиг
           </div>
           <p className="text-[11px] text-slate-400 italic">
             «Проспект кажется бесконечным. Панельные дома повторяются каждые триста метров...»
@@ -58,7 +58,7 @@ export const DeskEvidenceBoard: React.FC<DeskEvidenceBoardProps> = ({ gameState 
                 Поход в горы & Падение
               </div>
               <p className="text-[11px] text-slate-400 leading-tight mt-0.5">
-                Марк увлекался соло-треккингом. Сорвался со скалы в тумане из-за обрушения сланца.
+                Парень увлекался соло-треккингом. Сорвался со скалы в тумане из-за обрушения сланца.
               </p>
             </div>
           </div>
@@ -73,7 +73,7 @@ export const DeskEvidenceBoard: React.FC<DeskEvidenceBoardProps> = ({ gameState 
                 Застывшее время: 02:17
               </div>
               <p className="text-[11px] text-slate-400 leading-tight mt-0.5">
-                Механические часы разбиты на 02:17. В Лимбо стрелки замерли на той же минуте.
+                Механические часы разбиты на 02:17. В туманном мире стрелки замерли на той же минуте.
               </p>
             </div>
           </div>

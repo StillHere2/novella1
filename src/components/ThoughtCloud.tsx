@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { ThoughtBubble } from '../types/game';
-import { Sparkles, MessageSquarePlus, Brain, Eye } from 'lucide-react';
+import { MessageSquarePlus, Brain, Eye } from 'lucide-react';
 import { playTapSound } from '../utils/audio';
+import { VoiceWaveformIcon } from './VoiceWaveformIcon';
 
 interface ThoughtCloudProps {
   thoughts: ThoughtBubble[];
@@ -56,7 +57,9 @@ export const ThoughtCloud: React.FC<ThoughtCloudProps> = ({
                 {isAction ? (
                   <MessageSquarePlus className="w-3.5 h-3.5 text-purple-400 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
                 ) : (
-                  <Sparkles className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0 mt-0.5 opacity-80" />
+                  <div className="flex-shrink-0 mt-1">
+                    <VoiceWaveformIcon size="xs" barCount={3} />
+                  </div>
                 )}
 
                 <div className="flex-1">

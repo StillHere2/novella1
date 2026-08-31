@@ -1,6 +1,6 @@
 import React from 'react';
 import { Character, EndingType } from '../types/game';
-import { Users, FastForward, Play, Volume2, VolumeX, Sparkles, Sliders, X } from 'lucide-react';
+import { Users, FastForward, Play, Volume2, VolumeX, Sparkles, Sliders, X, RotateCcw } from 'lucide-react';
 import { playTapSound } from '../utils/audio';
 
 interface DevPanelProps {
@@ -17,6 +17,8 @@ interface DevPanelProps {
   onToggleSound: () => void;
   ambientSoundEnabled: boolean;
   onToggleAmbient: () => void;
+  onResetAll?: () => void;
+  isBoyNameKnown?: boolean;
   stats: {
     affection: number;
     courage: number;
@@ -40,6 +42,8 @@ export const DevPanel: React.FC<DevPanelProps> = ({
   onToggleSound,
   ambientSoundEnabled,
   onToggleAmbient,
+  onResetAll,
+  isBoyNameKnown = false,
   stats,
   onUpdateStat,
 }) => {
@@ -79,7 +83,9 @@ export const DevPanel: React.FC<DevPanelProps> = ({
               Текущая перспектива (Глазами):
             </span>
             <span className="font-mono text-xs text-purple-400 font-bold uppercase">
-              {activePerspective === 'girl' ? 'Алиса (Девушка)' : 'Марк (Призрак)'}
+              {activePerspective === 'girl'
+                ? 'Алиса (Девушка)'
+                : 'Собеседник (Парень)'}
             </span>
           </div>
           <button
@@ -90,7 +96,12 @@ export const DevPanel: React.FC<DevPanelProps> = ({
             }}
             className="w-full py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/50 text-purple-200 text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-95"
           >
-            <span>Переключить на {activePerspective === 'girl' ? 'Марка (Призрак)' : 'Алису (Девушка)'}</span>
+            <span>
+              Переключить на{' '}
+              {activePerspective === 'girl'
+                ? 'Собеседника (Парень)'
+                : 'Алису (Девушка)'}
+            </span>
           </button>
         </div>
 
@@ -174,7 +185,7 @@ export const DevPanel: React.FC<DevPanelProps> = ({
             </button>
             <button
               id="btn-dev-end-2"
-              onClick={() => onTriggerEnding('ending_2_eternal_limbo')}
+              onClick={() => onTriggerEnding('ending_2_eternal_fog')}
               className="p-2 rounded-xl bg-slate-800 hover:bg-purple-900/40 border border-slate-700 text-slate-200 hover:text-purple-200 text-[11px] text-left leading-tight"
             >
               <b>2.</b> Изоляция и паразит
@@ -203,33 +214,50 @@ export const DevPanel: React.FC<DevPanelProps> = ({
           </div>
         </div>
 
-        {/* 5. Sound & Atmosphere Toggles */}
-        <div className="bg-slate-900/80 p-3 rounded-2xl border border-white/5 flex items-center justify-between text-xs text-slate-300">
-          <div className="flex gap-2">
-            <button
-              id="btn-dev-toggle-sfx"
-              onClick={onToggleSound}
-              className={`p-2 rounded-xl border flex items-center gap-1.5 ${
-                soundEnabled
-                  ? 'bg-purple-900/30 border-purple-500/50 text-purple-200'
-                  : 'bg-slate-800 border-slate-700 text-slate-500'
-              }`}
-            >
-              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-              <span>Звуки</span>
-            </button>
-            <button
-              id="btn-dev-toggle-ambient"
-              onClick={onToggleAmbient}
-              className={`p-2 rounded-xl border flex items-center gap-1.5 ${
-                ambientSoundEnabled
-                  ? 'bg-cyan-900/30 border-cyan-500/50 text-cyan-200'
-                  : 'bg-slate-800 border-slate-700 text-slate-500'
-              }`}
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Эмбиент</span>
-            </button>
+        {/* 5. Sound, Atmosphere & Full Reset */}
+        <div className="bg-slate-900/80 p-3 rounded-2xl border border-white/5 flex flex-col gap-2.5 text-xs text-slate-300">
+          <div className="flex gap-2 items-center justify-between">
+            <div className="flex gap-2">
+              <button
+                id="btn-dev-toggle-sfx"
+                onClick={onToggleSound}
+                className={`p-2 rounded-xl border flex items-center gap-1.5 ${
+                  soundEnabled
+                    ? 'bg-purple-900/30 border-purple-500/50 text-purple-200'
+                    : 'bg-slate-800 border-slate-700 text-slate-500'
+                }`}
+              >
+                {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                <span>Звуки</span>
+              </button>
+              <button
+                id="btn-dev-toggle-ambient"
+                onClick={onToggleAmbient}
+                className={`p-2 rounded-xl border flex items-center gap-1.5 ${
+                  ambientSoundEnabled
+                    ? 'bg-cyan-900/30 border-cyan-500/50 text-cyan-200'
+                    : 'bg-slate-800 border-slate-700 text-slate-500'
+                }`}
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Эмбиент</span>
+              </button>
+            </div>
+
+            {onResetAll && (
+              <button
+                id="btn-dev-reset-all-progress"
+                onClick={() => {
+                  playTapSound();
+                  onResetAll();
+                }}
+                className="px-3 py-2 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 hover:border-red-400 text-red-300 text-xs font-semibold flex items-center gap-1.5 transition-all"
+                title="Сбросить весь сохраненный прогресс и начать День 1"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Сброс</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

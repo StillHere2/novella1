@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wifi, Signal, Battery, Sparkles, Radio } from 'lucide-react';
+import { Wifi, Signal, Battery, Radio } from 'lucide-react';
 import { Character } from '../types/game';
 
 interface PhoneHardwareProps {

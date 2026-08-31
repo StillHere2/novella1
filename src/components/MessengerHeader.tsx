@@ -6,6 +6,7 @@ interface MessengerHeaderProps {
   activePerspective: Character;
   currentDay: number;
   isTyping: boolean;
+  isBoyNameKnown?: boolean;
   onCallGhost?: () => void;
   onOpenDevMenu?: () => void;
   onOpenThoughts?: () => void;
@@ -22,7 +23,8 @@ export const MessengerHeader: React.FC<MessengerHeaderProps> = ({
   onOpenDevMenu,
 }) => {
   const isGirl = activePerspective === 'girl';
-  const contactName = isGirl ? 'Марк' : 'Алиса';
+  const contactName = isGirl ? '....' : 'Алиса';
+  const avatarLetter = isGirl ? '?' : 'А';
 
   return (
     <div
@@ -42,7 +44,7 @@ export const MessengerHeader: React.FC<MessengerHeaderProps> = ({
                   : 'bg-[#1f142b] border-purple-500/40 text-purple-300 shadow-[0_0_10px_rgba(168,85,247,0.15)]'
               }`}
             >
-              {isGirl ? 'М' : 'А'}
+              {avatarLetter}
             </div>
 
             {/* Active status indicator */}

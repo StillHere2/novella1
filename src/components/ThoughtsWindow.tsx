@@ -3,7 +3,6 @@ import { ThoughtBubble, Character, ChoiceOption } from '../types/game';
 import {
   X,
   Send,
-  Sparkles,
   BookOpen,
   Heart,
   ShieldAlert,
@@ -23,6 +22,7 @@ interface ThoughtsWindowProps {
   activePerspective: Character;
   onSendThought: (thought: ThoughtBubble) => void;
   readThoughtsHistory?: string[];
+  isBoyNameKnown?: boolean;
 }
 
 export const ThoughtsWindow: React.FC<ThoughtsWindowProps> = ({
@@ -32,6 +32,7 @@ export const ThoughtsWindow: React.FC<ThoughtsWindowProps> = ({
   activePerspective,
   onSendThought,
   readThoughtsHistory = [],
+  isBoyNameKnown = false,
 }) => {
   const [filterTab, setFilterTab] = useState<'all' | 'actionable' | 'background'>('all');
 
@@ -46,6 +47,8 @@ export const ThoughtsWindow: React.FC<ThoughtsWindowProps> = ({
       : filterTab === 'background'
       ? backgroundThoughts
       : allThoughts;
+
+  const diaryOwner = activePerspective === 'girl' ? 'Дневник Алисы' : 'Дневник: ....';
 
   const handleSend = (thought: ThoughtBubble) => {
     playPaperRustle(0.4);
@@ -95,7 +98,7 @@ export const ThoughtsWindow: React.FC<ThoughtsWindowProps> = ({
                 Окно «Мысли и Заметки»
               </h3>
               <p className="text-[10px] font-mono text-slate-400">
-                {activePerspective === 'girl' ? 'Дневник Алисы' : 'Дневник Марка'} • {allThoughts.length} записей
+                {diaryOwner} • {allThoughts.length} записей
               </p>
             </div>
           </div>
@@ -151,7 +154,7 @@ export const ThoughtsWindow: React.FC<ThoughtsWindowProps> = ({
                 : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
             }`}
           >
-            <Sparkles className="w-3 h-3 text-purple-400" />
+            <BookOpen className="w-3 h-3 text-purple-400" />
             <span>Раскрытие ({backgroundThoughts.length})</span>
           </button>
         </div>
@@ -189,7 +192,7 @@ export const ThoughtsWindow: React.FC<ThoughtsWindowProps> = ({
                         {cat.label}
                       </span>
                       <span className="text-[10px] font-mono text-slate-500">
-                        {t.character === 'girl' ? 'Алиса' : 'Марк'}
+                        {t.character === 'girl' ? 'Алиса' : '....'}
                       </span>
                     </div>
 

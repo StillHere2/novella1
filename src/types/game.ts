@@ -70,7 +70,7 @@ export interface DayStory {
 
 export type EndingType = 
   | 'ending_1_overcoming' // Alisa overcomes bullying, socializes and lives, Mark's soul finds peace
-  | 'ending_2_eternal_limbo' // Alisa stays socially dysfunctional, isolated in room chatting with the ghost (which is actually a dark entity attached to her)
+  | 'ending_2_eternal_fog' // Alisa stays socially dysfunctional, isolated in room chatting with the ghost (which is actually a dark entity attached to her)
   | 'ending_3a_saved' // Mark breaks through reality and saves Alisa in the nick of time
   | 'ending_3b_too_late' // Mark resurrects but arrives too late
   | 'ending_3c_open_finale'; // Mark arrives in rain, open ambiguous ending
@@ -123,4 +123,5 @@ export interface GameState {
   unlockedEndings: EndingType[];
   gameFinishedEnding: EndingType | null;
   isInitialDarkness: boolean; // Ghost boy start from pitch darkness
+  isBoyNameKnown?: boolean; // True once Mark has remembered/introduced his name
 }
